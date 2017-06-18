@@ -1,9 +1,8 @@
 # SYDE361
 Arduino component for SYDE 361 design project
 
+.ino file and supporting C++ files are for Teensy-based hardware that takes sound input and outputs the auto-corrected sound frequency.
 
-This .ino is for hardware that takes sound input and outputs the auto-corrected sound frequency
+### To run:
 
-### Processing:
-
-I used HapTuner from: 
+Open the processing.ino file on Teensy-Arduino device with the proper schematic as outlined.
