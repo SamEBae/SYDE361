@@ -50,12 +50,13 @@ const int GATE_ON = 1023;
 const int GATE_PIN = A16;
 const int AUDIO_PIN = A14;
 const int ENVELOPE_PIN = A15;
+
 int set_freq = 770;
-int    dataIndex = 0;
-char  dataInputBuffer[32];
-int val = 0;
+
 void loop() {
     int digit = 0;
+    int val = 0;
+    
     // Reads in the frequency that the user wants
     if (Serial.available()) {
       val = 0;
@@ -63,49 +64,26 @@ void loop() {
       
       while (Serial.available()) {
          int temp= Serial.read() - '0';
-         val = val + temp * pow(10, digit);
+         val += temp * pow(10, digit);
          digit--;
       }
       
-      Serial.println(val);
+      set_freq = val;
       Serial.end();    // Ends the serial communication once all data is received
       Serial.begin(9600);  // Re-establishes serial communication , this causes deletion of anything previously stored in the buffer                             //or cache
     }
-  
-    //delay(1000);
-    // check if the sensor is on
-//    if (analogRead(GATE_PIN) == GATE_ON) {
-//      int freq = analogRead(AUDIO_PIN);
-//      Serial.println(analogRead(AUDIO_PIN));
-//      tuned_note n = freq_to_note(freq, pitch_freqs);
-//      int index = n.getPitch();
-//      note_name note = *pitch_names[index];
-//      Serial.printf("closest tuned_note %c%c\n", note.getName(), note.getModifier());
-//      Serial.println();
-//    }
-    
+        
     if (notefreq.available()) {
       int freq = notefreq.read();
       float prob = notefreq.probability();
      
       tuned_note n = freq_to_note(freq, pitch_freqs);
       int index = n.getPitch();
-      double distance = n.getDistance();
-      
+      double distance = n.getDistance();      
       note_name note = *pitch_names[index];
-      //    Serial.print(freq); 
-      //    Serial.print("\t"); // delimit with tab
-      //    int time = millis();
-      //    Serial.print(time); 
-      //    Serial.println();
-      //Serial.println(freq);
-      //compare_with_desired_pitch(770, freq);
-      //   Serial.print(freq);
-      //   Serial.print(" ");
-      //   Serial.print(prob );
-      //   Serial.print(" and...");
-      //   Serial.printf("closest tuned_note %c%c\n", note.getName(), note.getModifier());
-  }
+
+      compare_with_desired_pitch(set_freq, freq);;
+    }
 }
 
 void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
@@ -114,12 +92,11 @@ void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
 
   note_name note_actual = *pitch_names[freq_to_note(actual_pitch, pitch_freqs).getPitch()];
   note_name note_desired = *pitch_names[freq_to_note(desired_pitch, pitch_freqs).getPitch()];
-  
-  //Serial.println()
-  // SE
+
+  // Output for user
   Serial.printf("Note that you meant to sing: %c%c\t", note_desired.getName(), note_desired.getModifier());
   Serial.printf(" note that you sang: %c%c", note_actual.getName(), note_actual.getModifier());
-  //Serial.println(actual_pitch);
+  Serial.println("");
   
   if (abs(difference) < margin_of_error) {
     Serial.println("perfect note!");
