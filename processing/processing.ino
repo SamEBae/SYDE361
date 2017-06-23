@@ -9,17 +9,20 @@
 #include "tuned_note.h"
 
 // GUItool: begin automatically generated code
-AudioInputUSB            usb1;           //xy=71,90
+AudioInputAnalog         adc(23);
+//AudioInputUSB            usb1;           //xy=71,90
 AudioFilterBiquad        biquad1;        //xy=229,169
-AudioOutputUSB           usb2;           //xy=448,94
+//AudioOutputUSB           usb2;           //xy=448,94
 AudioOutputI2S           i2s1;           //xy=453,164
+AudioAnalyzeFFT256       fft;       //xy=335,137
 AudioAnalyzeNoteFrequency notefreq;
-AudioConnection          patchCord1(usb1, 0, i2s1, 0);
-AudioConnection          patchCord2(usb1, 0, usb2, 0);
-AudioConnection          patchCord3(usb1, 1, biquad1, 0);
-AudioConnection          patchCord4(biquad1, 0, usb2, 1);
+AudioConnection          patchCord1(adc, 0, i2s1, 0);
+//AudioConnection          patchCord2(adc, 0, usb2, 0);
+AudioConnection          patchCord3(adc, 1, biquad1, 0);
+//AudioConnection          patchCord4(biquad1, 0, usb2, 1);
 AudioConnection          patchCord5(biquad1, 0, i2s1, 1);
-AudioConnection          patchCord6(usb1, 0, notefreq ,0);
+AudioConnection          patchCord6(adc, 0, notefreq ,0);
+AudioConnection          patchCord7(adc, fft);
 AudioControlSGTL5000     sgtl5000_1;     //xy=219,29
 // GUItool: end automatically generated code
 
@@ -54,36 +57,44 @@ const int ENVELOPE_PIN = A15;
 int set_freq = 770;
 
 void loop() {
-    int digit = 0;
-    int val = 0;
+  int digit = 0;
+  int val = 0;
+  
+  // Reads in the frequency that the user wants
+  if (Serial.available()) {
+    val = 0;
+    digit = Serial.available() - 1;
     
-    // Reads in the frequency that the user wants
-    if (Serial.available()) {
-      val = 0;
-      digit = Serial.available() - 1;
-      
-      while (Serial.available()) {
-         int temp= Serial.read() - '0';
-         val += temp * pow(10, digit);
-         digit--;
-      }
-      
-      set_freq = val;
-      Serial.end();    // Ends the serial communication once all data is received
-      Serial.begin(9600);  // Re-establishes serial communication , this causes deletion of anything previously stored in the buffer                             //or cache
+    while (Serial.available()) {
+       int temp= Serial.read() - '0';
+       val += temp * pow(10, digit);
+       digit--;
     }
-        
-    if (notefreq.available()) {
-      int freq = notefreq.read();
-      float prob = notefreq.probability();
-     
-      tuned_note n = freq_to_note(freq, pitch_freqs);
-      int index = n.getPitch();
-      double distance = n.getDistance();      
-      note_name note = *pitch_names[index];
+    
+    set_freq = val;
+    Serial.end();    // Ends the serial communication once all data is received
+    Serial.begin(9600);  // Re-establishes serial communication , this causes deletion of anything previously stored in the buffer                             //or cache
+  }
+  
+  /*
+  if (fft.available()){
+    Serial.println("yes");
+    for (int i = 0 ; i < 128 ; i += 1) {
+      Serial.println(6*fft.read(i));
+    }
+  }*/
+      
+  if (notefreq.available()) {
+    int freq = notefreq.read();
+    float prob = notefreq.probability();
+   
+    tuned_note n = freq_to_note(freq, pitch_freqs);
+    int index = n.getPitch();
+    double distance = n.getDistance();      
+    note_name note = *pitch_names[index];
 
-      compare_with_desired_pitch(set_freq, freq);;
-    }
+    compare_with_desired_pitch(set_freq, freq);;
+  }
 }
 
 void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
@@ -105,5 +116,4 @@ void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
   } else if (difference < 0) {
     Serial.println("go up");
   }
-
 }
