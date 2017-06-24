@@ -59,7 +59,7 @@ int set_freq = 770;
 void loop() {
   int digit = 0;
   int val = 0;
-  
+  delay(50);
   // Reads in the frequency that the user wants
   if (Serial.available()) {
     val = 0;
@@ -93,14 +93,16 @@ void loop() {
     double distance = n.getDistance();      
     note_name note = *pitch_names[index];
 
-    compare_with_desired_pitch(set_freq, freq);;
+    //compare_with_desired_pitch(set_freq, freq);
+    serialize_as_JSON(set_freq, freq);    
   }
 }
 
 void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
   int difference = actual_pitch -  desired_pitch;
   int margin_of_error = actual_pitch * 0.075;
-
+  Serial.println(actual_pitch);
+  
   note_name note_actual = *pitch_names[freq_to_note(actual_pitch, pitch_freqs).getPitch()];
   note_name note_desired = *pitch_names[freq_to_note(desired_pitch, pitch_freqs).getPitch()];
 
@@ -109,6 +111,7 @@ void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
   Serial.printf(" note that you sang: %c%c", note_actual.getName(), note_actual.getModifier());
   Serial.println("");
   
+  
   if (abs(difference) < margin_of_error) {
     Serial.println("perfect note!");
   } else if (difference > 0) {
@@ -116,4 +119,9 @@ void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
   } else if (difference < 0) {
     Serial.println("go up");
   }
+}
+
+void serialize_as_JSON(int desired_pitch, int actual_pitch) {
+    Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\"}", millis(), desired_pitch, actual_pitch);
+    Serial.println();
 }

@@ -6,7 +6,7 @@ SerialPort = require('serialport')
 
 var socketServer;
 var serialPort;
-var portName = '/dev/cu.usbmodem1421'; //change this to your Arduino port
+var portName = '/dev/tty.usbmodem2851921'; //change this to your Arduino port
 var sendData = "";
 
 // handle contains locations to browse to (vote and poll); pathnames.
@@ -71,12 +71,12 @@ function serialListener(debug)
         serialPort.on('data', function(data) {
              receivedData += data.toString();
           console.log(receivedData);
-          if (receivedData .indexOf('E') >= 0 && receivedData .indexOf('B') >= 0) {
-           sendData = receivedData .substring(receivedData .indexOf('B') + 1, receivedData .indexOf('E'));
-           receivedData = '';
-         }
+         //  if (receivedData .indexOf('E') >= 0 && receivedData .indexOf('B') >= 0) {
+         //   sendData = receivedData .substring(receivedData .indexOf('B') + 1, receivedData .indexOf('E'));
+         //   receivedData = '';
+         // }
          // send the incoming data to browser with websockets.
-       socketServer.emit('update', sendData);
+       socketServer.emit('update', receivedData);
       });  
     });  
 }

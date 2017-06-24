@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<div id="chart">
+    <svg></svg>
+</div>
+
+<h4> Average difference </h4>
+<div id="basic-feedback">
+</div>
+
+<h4> Time Elapsed </h4>
+<div id="time-past">
+</div>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.css">
+<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.js"></script>
+<script type="text/javascript">
+    var soundData = [{key: "Pitch", values: [] }],
+        basicFeedbackDiv = document.getElementById('basic-feedback'),
+        timePastDiv = document.getElementById('time-past'),
+        numberProcessed = 0,
+        sumDiff = 0,
+        avg = 0,
+        firstTime = 0;
+
+    function initSocketIO() {
+        iosocket = io.connect();
+        iosocket.on('onconnection', function(value) {
+                // recieve changed values by other client from server
+                console.log('connection');
+                iosocket.on('update', function (recievedData) {
+                    
+
+                    var parsedData  = recievedData,
+                        dataSplited = recievedData.split('\n');
+
+                    if (IsJSONString(dataSplited[0])) {
+                        
+                        for (let data of dataSplited) {
+                            if (IsJSONString(data)){
+
+                                var JSONData = JSON.parse(data), 
+                                    difference = Math.abs(JSONData.actual - JSONData.desired),
+                                    tempObj = {};
+
+                                if (!firstTime) {
+                                    firstTime = JSONData.timestamp;
+                                }
+
+                                if (JSONData.actual > 10000) {
+                                    continue;
+                                }
+
+                                tempObj['label'] = JSONData.timestamp;
+                                tempObj['value'] = difference;
+                                soundData[0].values.push(tempObj);
+
+                                // console.log(JSONData.timestamp);
+                                sumDiff += difference;
+                                numberProcessed++;
+                                avg = sumDiff / numberProcessed;
+                                basicFeedbackDiv.innerHTML = avg;
+                                timePastDiv.innerHTML = JSONData.timestamp - firstTime ; 
+                            }
+                        }
+                        
+                    }
+                    
+                });
+        });
+    }
+
+    function IsJSONString(str) {
+        try {
+            JSON.parse(str);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
+
+    initSocketIO();
+
+    function updateGraph() {
+        nv.addGraph(function() {
+            var chart = nv.models.discreteBarChart()
+                .x(function(d) { return d.label })    //Specify the data accessors.
+                .y(function(d) { return d.value })
+                .staggerLabels(true)    //Too many bars and not enough room? Try staggering labels.
+                .tooltips(false)        //Don't show tooltips
+                .showValues(true)       //...instead, show the bar value right on top of each bar.
+                .transitionDuration(350)
+                ;
+
+            d3.select('#chart svg')
+              .datum(soundData)
+              .call(chart);
+
+            nv.utils.windowResize(chart.update);
+
+            return chart;
+        }); 
+    }
+</script>
+</body>
+</html>
