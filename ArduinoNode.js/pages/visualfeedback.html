@@ -2,6 +2,9 @@
 <html>
 <head>
     <title></title>
+    <style type="text/css">
+
+    </style>
 </head>
 <body>
 <div id="chart">
@@ -14,6 +17,13 @@
 
 <h4> Time Elapsed </h4>
 <div id="time-past">
+</div>
+
+
+<div id='discrete-view'>
+    <img src="../images/up.svg"     id='up-arrow'   width="200px" height="200px">
+    <img src="../images/down.svg"   id='down-arrow' width="200px" height="200px">
+    <img src="../images/good.svg"   id='good-arrow' width="200px" height="200px">
 </div>
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.css">
@@ -47,7 +57,8 @@
                             if (IsJSONString(data)){
 
                                 var JSONData = JSON.parse(data), 
-                                    difference = Math.abs(JSONData.actual - JSONData.desired),
+                                    //difference = Math.abs(JSONData.actual - JSONData.desired),
+                                    difference = JSONData.desired - JSONData.actual,
                                     tempObj = {};
 
                                 if (!firstTime) {
@@ -108,6 +119,9 @@
             return chart;
         }); 
     }
+
+
 </script>
+<script src='../discrete.js'></script>
 </body>
 </html>
