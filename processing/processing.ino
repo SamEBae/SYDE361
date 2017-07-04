@@ -36,6 +36,14 @@ void setup() {
   delay(250);
   AudioMemory(30);
   delay(250);
+  pinMode(0,INPUT);
+  pinMode(1,INPUT);
+  pinMode(2,INPUT);
+  pinMode(3,INPUT);
+  pinMode(4,INPUT);
+  pinMode(5,INPUT);
+  pinMode(6,INPUT);
+  pinMode(7,INPUT);
 
   notefreq.begin(1);
   sgtl5000_1.enable();
@@ -54,7 +62,7 @@ const int GATE_PIN = A16;
 const int AUDIO_PIN = A14;
 const int ENVELOPE_PIN = A15;
 
-int set_freq = 770;
+int set_freq = 880;
 
 void loop() {
   int digit = 0;
@@ -76,7 +84,15 @@ void loop() {
     Serial.end();    // Ends the serial communication once all data is received
     Serial.begin(9600);  // Re-establishes serial communication , this causes deletion of anything previously stored in the buffer                             //or cache
   }
-  Serial.println('1');
+  if (digitalRead(0)) set_freq = 880;
+  else if (digitalRead(1)) set_freq = 988;
+  else if (digitalRead(2)) set_freq = 1046;
+  else if (digitalRead(3)) set_freq = 1175;
+  else if (digitalRead(4)) set_freq = 1319;
+  else if (digitalRead(5)) set_freq = 1397;
+  else if (digitalRead(6)) set_freq = 1568;
+  else if (digitalRead(7)) set_freq = 1760;
+  
   /*
   if (fft.available()){
     Serial.println("yes");
