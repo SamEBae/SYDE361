@@ -9,7 +9,7 @@
 #include "tuned_note.h"
 
 // GUItool: begin automatically generated code
-AudioInputAnalog         adc(23);
+AudioInputAnalog         adc(21);
 //AudioInputUSB            usb1;           //xy=71,90
 AudioFilterBiquad        biquad1;        //xy=229,169
 //AudioOutputUSB           usb2;           //xy=448,94
@@ -60,6 +60,7 @@ void loop() {
   int digit = 0;
   int val = 0;
   delay(50);
+  analogWrite(A6,0);
   // Reads in the frequency that the user wants
   if (Serial.available()) {
     val = 0;
@@ -75,7 +76,7 @@ void loop() {
     Serial.end();    // Ends the serial communication once all data is received
     Serial.begin(9600);  // Re-establishes serial communication , this causes deletion of anything previously stored in the buffer                             //or cache
   }
-  
+  Serial.println('1');
   /*
   if (fft.available()){
     Serial.println("yes");
@@ -83,7 +84,6 @@ void loop() {
       Serial.println(6*fft.read(i));
     }
   }*/
-      
   if (notefreq.available()) {
     int freq = notefreq.read();
     float prob = notefreq.probability();
@@ -93,15 +93,14 @@ void loop() {
     double distance = n.getDistance();      
     note_name note = *pitch_names[index];
 
-    //compare_with_desired_pitch(set_freq, freq);
-    serialize_as_JSON(set_freq, freq);    
+    compare_with_desired_pitch(set_freq, freq);
+    //serialize_as_JSON(set_freq, freq);
   }
 }
 
 void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
   int difference = actual_pitch -  desired_pitch;
   int margin_of_error = actual_pitch * 0.075;
-  Serial.println(actual_pitch);
   
   note_name note_actual = *pitch_names[freq_to_note(actual_pitch, pitch_freqs).getPitch()];
   note_name note_desired = *pitch_names[freq_to_note(desired_pitch, pitch_freqs).getPitch()];
@@ -111,14 +110,24 @@ void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
   Serial.printf(" note that you sang: %c%c", note_actual.getName(), note_actual.getModifier());
   Serial.println("");
   
-  
+  int out = 0;
   if (abs(difference) < margin_of_error) {
     Serial.println("perfect note!");
+    out = 127;
   } else if (difference > 0) {
     Serial.println("go down");
+    if (abs(difference) < desired_pitch) {
+      out = floor(abs(difference)/(2.0*desired_pitch)*128+127);
+    }
+    else out = 255;
   } else if (difference < 0) {
     Serial.println("go up");
+    out = ceil((1-abs(difference)/(1.0*desired_pitch))*128);
   }
+  if (out > 255) out = 255;
+  if (out < 0) out = 0;
+  analogWrite(A6,255);
+  analogWrite(A21,out);
 }
 
 void serialize_as_JSON(int desired_pitch, int actual_pitch) {
