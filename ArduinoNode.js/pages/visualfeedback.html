@@ -2,11 +2,27 @@
 <html>
 <head>
     <title></title>
+    <style>
+        text {
+            font: 12px sans-serif;
+        }
+        svg {
+            display: block;
+        }
+        html, body, #chart1, svg {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-<div id="chart">
+<div id="chart1">
     <svg></svg>
 </div>
+
+
 
 <h4> Average difference </h4>
 <div id="basic-feedback">
@@ -22,6 +38,68 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.js"></script>
 <script type="text/javascript">
+
+    var historicalBarChart = [
+        {
+            key: "Cumulative Return",
+            values: [
+                {
+                    "label" : "A" ,
+                    "value" : 29.765957771107
+                } ,
+                {
+                    "label" : "B" ,
+                    "value" : 0
+                } ,
+                {
+                    "label" : "C" ,
+                    "value" : 32.807804682612
+                } ,
+                {
+                    "label" : "D" ,
+                    "value" : 196.45946739256
+                } ,
+                {
+                    "label" : "E" ,
+                    "value" : 0.19434030906893
+                } ,
+                {
+                    "label" : "F" ,
+                    "value" : 98.079782601442
+                } ,
+                {
+                    "label" : "G" ,
+                    "value" : 13.925743130903
+                } ,
+                {
+                    "label" : "H" ,
+                    "value" : 5.1387322875705
+                }
+            ]
+        }
+    ];
+
+    function graphIt(soundData) {
+        nv.addGraph(function() {
+            var chart = nv.models.discreteBarChart()
+                .x(function(d) { return d.label })
+                .y(function(d) { return d.value })
+                .staggerLabels(true)
+                //.staggerLabels(historicalBarChart[0].values.length > 8)
+                .showValues(true)
+                .duration(250)
+                ;
+
+            d3.select('#chart1 svg')
+                .datum(soundData)
+                .call(chart);
+
+            nv.utils.windowResize(chart.update);
+            return chart;
+        });
+
+    }
+
     var soundData = [{key: "Pitch", values: [] }],
         basicFeedbackDiv = document.getElementById('basic-feedback'),
         timePastDiv = document.getElementById('time-past'),
@@ -34,7 +112,6 @@
         iosocket = io.connect();
         iosocket.on('onconnection', function(value) {
                 // recieve changed values by other client from server
-                console.log('connection');
                 iosocket.on('update', function (recievedData) {
                     
 
@@ -42,7 +119,6 @@
                         dataSplited = recievedData.split('\n');
 
                     if (IsJSONString(dataSplited[0])) {
-                        
                         for (let data of dataSplited) {
                             if (IsJSONString(data)){
 
@@ -59,10 +135,18 @@
                                 }
 
                                 tempObj['label'] = JSONData.timestamp;
-                                tempObj['value'] = difference;
+                                //tempObj['value'] = difference;                               
+                                tempObj['value'] = JSONData.actual;
+
+                                graphIt(soundData);
+
+                                if (soundData[0].values.length >= 30) {
+                                    soundData[0].values.shift();
+
+                                    //soundData[0].values = soundData[0].values.slice(soundData[0].values.length-30);
+                                }
                                 soundData[0].values.push(tempObj);
 
-                                // console.log(JSONData.timestamp);
                                 sumDiff += difference;
                                 numberProcessed++;
                                 avg = sumDiff / numberProcessed;
@@ -91,12 +175,12 @@
     function updateGraph() {
         nv.addGraph(function() {
             var chart = nv.models.discreteBarChart()
-                .x(function(d) { return d.label })    //Specify the data accessors.
-                .y(function(d) { return d.value })
+                //.x(function(d) { return d.label })    //Specify the data accessors.
+                //.y(function(d) { return d.value })
                 .staggerLabels(true)    //Too many bars and not enough room? Try staggering labels.
                 .tooltips(false)        //Don't show tooltips
-                .showValues(true)       //...instead, show the bar value right on top of each bar.
-                .transitionDuration(350)
+                //.showValues(true)       //...instead, show the bar value right on top of each bar.
+                //.transitionDuration(350)
                 ;
 
             d3.select('#chart svg')
@@ -108,6 +192,7 @@
             return chart;
         }); 
     }
+
 </script>
 </body>
 </html>

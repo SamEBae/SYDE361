@@ -9,7 +9,7 @@
 #include "tuned_note.h"
 
 // GUItool: begin automatically generated code
-AudioInputAnalog         adc(23);
+AudioInputAnalog         adc(20);
 //AudioInputUSB            usb1;           //xy=71,90
 AudioFilterBiquad        biquad1;        //xy=229,169
 //AudioOutputUSB           usb2;           //xy=448,94
@@ -94,6 +94,10 @@ void loop() {
     note_name note = *pitch_names[index];
 
     //compare_with_desired_pitch(set_freq, freq);
+    //Serial.println(analogRead(13)); // caps 65535
+    //Serial.println(analogRead(12));
+    analogWrite(A21, 70);
+    analogWrite(A22, 70);
     serialize_as_JSON(set_freq, freq);    
   }
 }
@@ -122,6 +126,7 @@ void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
 }
 
 void serialize_as_JSON(int desired_pitch, int actual_pitch) {
+    
     Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\"}", millis(), desired_pitch, actual_pitch);
     Serial.println();
 }
