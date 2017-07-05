@@ -3,6 +3,8 @@ function route(handle, pathname,response,request,debug) {
    //typeof probes the data type of handle[pathname]. So if 
    //handle[pathname] is a function (in both type and value)
    //,then run that function. 
+   console.log([pathname, handle]);
+
    if (typeof handle[pathname] === 'function') {
      return handle[pathname](response,request);
 	} else {

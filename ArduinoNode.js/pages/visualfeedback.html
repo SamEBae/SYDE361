@@ -2,28 +2,47 @@
 <html>
 <head>
     <title></title>
-    <style type="text/css">
-
+    <style>
+        text {
+            font: 12px sans-serif;
+        }
+        svg {
+            display: block;
+        }
+        html, body, #chart1, svg {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-<div id="chart">
+
+<button onclick="continousMode();"> Continous Mode </button>
+<button onclick="discreteMode();"> Discrete Mode </button>
+
+
+<div id="chart1">
     <svg></svg>
 </div>
 
-<h4> Average difference </h4>
-<div id="basic-feedback">
+<!-- 
+<div id='status-messages'>
+    <h4> Average difference </h4>
+    <div id="basic-feedback">
+    </div>
+    <h4> Time Elapsed </h4>
+    <div id="time-past">
+    </div>
 </div>
-
-<h4> Time Elapsed </h4>
-<div id="time-past">
-</div>
+-->
 
 
 <div id='discrete-view'>
-    <img src="../images/up.svg"     id='up-arrow'   width="200px" height="200px">
-    <img src="../images/down.svg"   id='down-arrow' width="200px" height="200px">
-    <img src="../images/good.svg"   id='good-arrow' width="200px" height="200px">
+    <img src="http://sammiebae.com/images/up.svg"     id='up-arrow'   width="200px" height="200px">
+    <img src="http://sammiebae.com/images/down.svg"   id='down-arrow' width="200px" height="200px">
+    <img src="http://sammiebae.com/images/good.svg"   id='good-arrow' width="200px" height="200px">
 </div>
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.css">
@@ -32,6 +51,138 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.js"></script>
 <script type="text/javascript">
+
+var discreteUI = document.getElementById('discrete-view');
+var continousUI = document.getElementById('chart1');
+
+function discreteMode() {
+    if (discreteUI.style.display)
+        discreteUI.style.display = '';
+    else
+        discreteUI.style.display = 'none';
+}
+function continousMode() {
+   if (continousUI.style.display)
+        continousUI.style.display = '';
+    else
+        continousUI.style.display = 'none';
+}
+
+
+function DiscreteView() {
+    this.upArrow = document.getElementById('up-arrow');
+    this.downArrow = document.getElementById('down-arrow');
+    this.goodArrow = document.getElementById('good-arrow');
+    // init by hiding the arrows
+    this.hideAll();
+}
+
+DiscreteView.prototype.hideAll = function() {
+    this.upArrow.style.display = 'none';
+    this.downArrow.style.display = 'none';
+    this.goodArrow.style.display = 'none';
+};
+
+DiscreteView.prototype.showUp = function() {
+    this.upArrow.style.display = '';
+};
+
+DiscreteView.prototype.showDown = function() {
+    this.downArrow.style.display = '';
+};
+
+DiscreteView.prototype.showGood = function() {
+    this.goodArrow.style.display = '';
+};
+
+DiscreteView.prototype.handlePitch = function(pitch) {
+    // pitch: {actual: float, desired: float}
+
+    // hide before doing anything first:
+    this.hideAll();
+
+
+    // if pitch is bigger, then make arrow go down
+    // if pitch is smaller, then make arrow go up
+    // if pitch within acceptable range, display logo to indicate it's oaky
+    var marginOfError = pitch.actual * 0.075,
+        difference = Math.abs(pitch.actual -  pitch.desired);
+
+    if (difference <= marginOfError) {
+        this.showGood();
+    } else if (pitch.actual < pitch.desired) {
+        this.showUp();
+    } else {
+        this.showDown();
+    }
+};
+
+
+// Tests
+var view2 = new DiscreteView();
+
+    var historicalBarChart = [
+        {
+            key: "Cumulative Return",
+            values: [
+                {
+                    "label" : "A" ,
+                    "value" : 29.765957771107
+                } ,
+                {
+                    "label" : "B" ,
+                    "value" : 0
+                } ,
+                {
+                    "label" : "C" ,
+                    "value" : 32.807804682612
+                } ,
+                {
+                    "label" : "D" ,
+                    "value" : 196.45946739256
+                } ,
+                {
+                    "label" : "E" ,
+                    "value" : 0.19434030906893
+                } ,
+                {
+                    "label" : "F" ,
+                    "value" : 98.079782601442
+                } ,
+                {
+                    "label" : "G" ,
+                    "value" : 13.925743130903
+                } ,
+                {
+                    "label" : "H" ,
+                    "value" : 5.1387322875705
+                }
+            ]
+        }
+    ];
+    function graphIt(soundData) {
+        nv.addGraph(function() {
+            var chart = nv.models.discreteBarChart()
+                .x(function(d) { return d.label })
+                .y(function(d) { return d.value })
+                .staggerLabels(true)
+                .showValues(false)
+                .showXAxis(false);
+
+            d3.select('#chart1 svg')
+                .datum(soundData)
+                .call(chart);
+            
+
+            function dummyToolTip()  {
+                return '';
+            }
+            chart.tooltip.contentGenerator(dummyToolTip);
+
+            nv.utils.windowResize(chart.update);
+            return chart;
+        });
+    }
     var soundData = [{key: "Pitch", values: [] }],
         basicFeedbackDiv = document.getElementById('basic-feedback'),
         timePastDiv = document.getElementById('time-past'),
@@ -39,46 +190,54 @@
         sumDiff = 0,
         avg = 0,
         firstTime = 0;
-
     function initSocketIO() {
         iosocket = io.connect();
         iosocket.on('onconnection', function(value) {
                 // recieve changed values by other client from server
-                console.log('connection');
                 iosocket.on('update', function (recievedData) {
                     
-
                     var parsedData  = recievedData,
                         dataSplited = recievedData.split('\n');
-
                     if (IsJSONString(dataSplited[0])) {
-                        
                         for (let data of dataSplited) {
                             if (IsJSONString(data)){
-
                                 var JSONData = JSON.parse(data), 
-                                    //difference = Math.abs(JSONData.actual - JSONData.desired),
-                                    difference = JSONData.desired - JSONData.actual,
-                                    tempObj = {};
+                                    difference = JSONData.actual - JSONData.desired,
+                                    tempObj = {},
+                                    marginOfError = JSONData.actual * 0.085;
 
                                 if (!firstTime) {
                                     firstTime = JSONData.timestamp;
                                 }
-
                                 if (JSONData.actual > 10000) {
                                     continue;
                                 }
-
                                 tempObj['label'] = JSONData.timestamp;
-                                tempObj['value'] = difference;
-                                soundData[0].values.push(tempObj);
+                                tempObj['value'] = difference;                               
+                                //tempObj['value'] = JSONData.actual;
+                                
 
-                                // console.log(JSONData.timestamp);
-                                sumDiff += difference;
-                                numberProcessed++;
-                                avg = sumDiff / numberProcessed;
-                                basicFeedbackDiv.innerHTML = avg;
-                                timePastDiv.innerHTML = JSONData.timestamp - firstTime ; 
+                                //continous mode
+                                graphIt(soundData);
+                                
+                                // discrete mode
+                                view2.handlePitch(JSONData)
+
+
+                                if (soundData[0].values.length >= 30) {
+                                    soundData[0].values.shift();
+                                }
+
+
+                                if (Math.abs(difference) < marginOfError) {
+                                    tempObj['value'] = 0;
+                                } 
+                                soundData[0].values.push(tempObj);
+                                // sumDiff += difference;
+                                // numberProcessed++;
+                                // avg = sumDiff / numberProcessed;
+                                // basicFeedbackDiv.innerHTML = avg;
+                                // timePastDiv.innerHTML = JSONData.timestamp - firstTime;
                             }
                         }
                         
@@ -87,7 +246,6 @@
                 });
         });
     }
-
     function IsJSONString(str) {
         try {
             JSON.parse(str);
@@ -96,32 +254,26 @@
         }
         return true;
     }
-
     initSocketIO();
-
     function updateGraph() {
         nv.addGraph(function() {
-            var chart = nv.models.discreteBarChart()
-                .x(function(d) { return d.label })    //Specify the data accessors.
-                .y(function(d) { return d.value })
+            var chart = nv.models.lineChart()
+                //.x(function(d) { return d.label })    //Specify the data accessors.
+                //.y(function(d) { return d.value })
                 .staggerLabels(true)    //Too many bars and not enough room? Try staggering labels.
-                .tooltips(false)        //Don't show tooltips
-                .showValues(true)       //...instead, show the bar value right on top of each bar.
-                .transitionDuration(350)
+                .tooltip.enabled(false)        //Don't show tooltips
+                .showYAxis(false)
+                .showValues(false)       //...instead, show the bar value right on top of each bar.
+                //.transitionDuration(350)
                 ;
-
             d3.select('#chart svg')
               .datum(soundData)
               .call(chart);
-
             nv.utils.windowResize(chart.update);
 
             return chart;
         }); 
     }
-
-
 </script>
-<script src='../discrete.js'></script>
 </body>
 </html>
