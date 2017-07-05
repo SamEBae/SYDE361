@@ -36,6 +36,14 @@ void setup() {
   delay(250);
   AudioMemory(30);
   delay(250);
+  pinMode(0,INPUT);
+  pinMode(1,INPUT);
+  pinMode(2,INPUT);
+  pinMode(3,INPUT);
+  pinMode(4,INPUT);
+  pinMode(5,INPUT);
+  pinMode(6,INPUT);
+  pinMode(7,INPUT);
 
   notefreq.begin(1);
   sgtl5000_1.enable();
@@ -54,7 +62,7 @@ const int GATE_PIN = A16;
 const int AUDIO_PIN = A14;
 const int ENVELOPE_PIN = A15;
 
-int set_freq = 770;
+int set_freq = 220; // used to be 880
 
 void loop() {
   int digit = 0;
@@ -76,7 +84,46 @@ void loop() {
     Serial.end();    // Ends the serial communication once all data is received
     Serial.begin(9600);  // Re-establishes serial communication , this causes deletion of anything previously stored in the buffer                             //or cache
   }
-  Serial.println('1');
+
+  /*
+   *  D[2] -  73.416
+      C[3]  - 130.81
+      E[3] -  164.81
+      F[3]   - 174.61
+      G[3]  - 196.00
+      A[3]  - 220.00
+      B[3]   - 246.94
+      A[4]  - 440.00
+   * 
+   */
+  /*
+   * 
+   * if (digitalRead(0)) set_freq = 880;
+      else if (digitalRead(1)) set_freq = 988;
+      else if (digitalRead(2)) set_freq = 1046;
+      else if (digitalRead(3)) set_freq = 1175;
+      else if (digitalRead(4)) set_freq = 1319;
+      else if (digitalRead(5)) set_freq = 1397;
+      else if (digitalRead(6)) set_freq = 1568;
+      else if (digitalRead(7)) set_freq = 1760;
+
+        if (digitalRead(0)) set_freq = 73;
+      else if (digitalRead(1)) set_freq = 131;
+      else if (digitalRead(2)) set_freq = 165;
+      else if (digitalRead(3)) set_freq = 175;
+      else if (digitalRead(4)) set_freq = 196;
+      else if (digitalRead(5)) set_freq = 220;
+      else if (digitalRead(6)) set_freq = 247;
+      else if (digitalRead(7)) set_freq = 440;
+   */
+  if (digitalRead(0)) set_freq = 131;
+  else if (digitalRead(1)) set_freq = 165;
+  else if (digitalRead(2)) set_freq = 175;
+  else if (digitalRead(3)) set_freq = 196;
+  else if (digitalRead(4)) set_freq = 220;
+  else if (digitalRead(5)) set_freq = 247;
+  else if (digitalRead(6)) set_freq = 440;
+  else if (digitalRead(7)) set_freq = 800;//doesn't work right now
   /*
   if (fft.available()){
     Serial.println("yes");
@@ -89,12 +136,19 @@ void loop() {
     float prob = notefreq.probability();
    
     tuned_note n = freq_to_note(freq, pitch_freqs);
+    //tuned_note n = freq_to_note(set_freq, pitch_freqs);
     int index = n.getPitch();
     double distance = n.getDistance();      
     note_name note = *pitch_names[index];
-
+    note_name note_desired = *pitch_names[freq_to_note(set_freq, pitch_freqs).getPitch()];
+    
     compare_with_desired_pitch(set_freq, freq);
-    //serialize_as_JSON(set_freq, freq);
+    //Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), set_freq, freq, note.getName(), note.getModifier() , note.getOctave()); 
+    Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), set_freq, freq, note_desired.getName(), note_desired.getModifier() , note_desired.getOctave()); 
+    Serial.println();
+    
+    //serialize_as_JSON(set_freq, freq, note.getName(), note.getModifier(), note.getOctave());
+    //Serial.println(note.getName());
   }
 }
 
@@ -106,22 +160,22 @@ void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
   note_name note_desired = *pitch_names[freq_to_note(desired_pitch, pitch_freqs).getPitch()];
 
   // Output for user
-  Serial.printf("Note that you meant to sing: %c%c\t", note_desired.getName(), note_desired.getModifier());
-  Serial.printf(" note that you sang: %c%c", note_actual.getName(), note_actual.getModifier());
-  Serial.println("");
+  //Serial.printf("Note that you meant to sing: %c%c\t", note_desired.getName(), note_desired.getModifier());
+  //Serial.printf(" note that you sang: %c%c", note_actual.getName(), note_actual.getModifier());
+  //Serial.println("");
   
   int out = 0;
   if (abs(difference) < margin_of_error) {
-    Serial.println("perfect note!");
+    //Serial.println("perfect note!");
     out = 127;
   } else if (difference > 0) {
-    Serial.println("go down");
+    //Serial.println("go down");
     if (abs(difference) < desired_pitch) {
       out = floor(abs(difference)/(2.0*desired_pitch)*128+127);
     }
     else out = 255;
   } else if (difference < 0) {
-    Serial.println("go up");
+    //Serial.println("go up");
     out = ceil((1-abs(difference)/(1.0*desired_pitch))*128);
   }
   if (out > 255) out = 255;
@@ -130,7 +184,12 @@ void compare_with_desired_pitch(int desired_pitch , int actual_pitch ) {
   analogWrite(A21,out);
 }
 
-void serialize_as_JSON(int desired_pitch, int actual_pitch) {
-    Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\"}", millis(), desired_pitch, actual_pitch);
-    Serial.println();
+// void serialize_as_JSON(int desired_pitch, int actual_pitch) {
+//     Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\"}", millis(), desired_pitch, actual_pitch);
+//     Serial.println();
+// }
+
+void serialize_as_JSON(int desired_pitch, int actual_pitch, const String& note, const String& modifier, const String& octave) {
+  Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%c\"}", millis(), desired_pitch, actual_pitch, note, modifier, octave);  
+  Serial.println();
 }

@@ -33,34 +33,76 @@ int read_LCD_buttons()
 */
  return btnNONE;  // when all others fail, return this...
 }
+int mode = 0;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   lcd.begin(16, 2);              // start the library
   lcd.setCursor(8,0);
   lcd.print("|"); // print a simple message
+  lcd.setCursor(0,0);
+  lcd.print("CONT"); // print a simple message
 }
+int perfect = 119; //from observation, might need calibration
 
 void loop() {
   // put your main code here, to run repeatedly:
+  if (read_LCD_buttons() == 1) {
+    lcd.setCursor(0,0);
+    lcd.print("CONT"); // print a simple message
+    mode = 0;
+  }
+  else if (read_LCD_buttons() == 2) {
+    lcd.setCursor(0,0);
+    lcd.print("DISC"); // print a simple message
+    mode = 1;
+  }
   if (analogRead(2) > 200) {
-    Serial.print(0);
-    Serial.print(" ");
-    Serial.print(250);
-    Serial.print(" ");
-    Serial.print(121); //from observation, should be the correct one
-    Serial.print(" ");
-    int input = analogRead(1);
+    Serial.println(analogRead(1));
+    int input = analogRead(1)+(128-perfect);
     if (input > 255) input = 255;
     if (input < 0) input = 0;
-    Serial.println(input);
     int value = (input)/16;
-    lcd.setCursor(value,1);
-    lcd.print("|");
-    for (int i = 0 ; i < 17 ; i += 1) {
-      if (i!=value){
-        lcd.setCursor(i,1);
-        lcd.print(" ");
+    if (mode == 0) {
+      lcd.setCursor(value,1);
+      lcd.print("|");
+      for (int i = 0 ; i < 16 ; i += 1) {
+        if (i != value){
+          lcd.setCursor(i,1);
+          lcd.print(" ");
+        }
+      }
+    }
+    if (mode == 1) {
+      if (value > 8) {
+        lcd.setCursor(13,1);
+        lcd.print("<--");
+        for (int i = 0 ; i < 13 ; i += 1) {
+          if (i != value){
+            lcd.setCursor(i,1);
+            lcd.print(" ");
+          }
+        }
+      }
+      else if (value < 8) {
+        lcd.setCursor(0,1);
+        lcd.print("-->");
+        for (int i = 3 ; i < 16 ; i += 1) {
+          if (i != value){
+            lcd.setCursor(i,1);
+            lcd.print(" ");
+          }
+        }
+      }
+      else {
+        lcd.setCursor(8,1);
+        lcd.print("X");
+        for (int i = 0 ; i < 16 ; i += 1) {
+          if (i != 8){
+            lcd.setCursor(i,1);
+            lcd.print(" ");
+          }
+        }
       }
     }
   }
