@@ -84,7 +84,6 @@ void loop() {
     Serial.end();    // Ends the serial communication once all data is received
     Serial.begin(9600);  // Re-establishes serial communication , this causes deletion of anything previously stored in the buffer                             //or cache
   }
-
   /*
    *  D[2] -  73.416
       C[3]  - 130.81
@@ -124,6 +123,7 @@ void loop() {
   else if (digitalRead(5)) set_freq = 247;
   else if (digitalRead(6)) set_freq = 440;
   else if (digitalRead(7)) set_freq = 800;//doesn't work right now
+
   /*
   if (fft.available()){
     Serial.println("yes");
