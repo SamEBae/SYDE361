@@ -2,7 +2,9 @@ var fs = require('fs')
 ,http = require('http'),
 socketio = require('socket.io'),
 url = require("url"), 
-SerialPort = require('serialport')
+SerialPort = require('serialport');
+var play = require('play');
+
 
 var socketServer;
 var serialPort;
@@ -22,12 +24,58 @@ function startServer(route,handle,debug)
 	  var content = route(handle,pathname,response,request,debug);
 	}
 	
+
 	var httpServer = http.createServer(onRequest).listen(1337, function(){
 		console.log("Listening at: http://localhost:1337");
 		console.log("Server is up");
 	}); 
+
+	// play with a callback]
+	//frequencyHandler(pitchTest);
+	//frequencyHandler(pitchTest2);
+
 	serialListener(debug);
 	initSocketIO(httpServer,debug);
+}
+
+
+var pitchTest = {
+	'note': 'A#',
+	'octave': '3'
+};
+
+var pitchTest2 = {
+	'note': 'C',
+	'octave': '3'
+}
+
+function frequencyHandler(pitch) {
+	var filePath = 'notes/';
+
+	filePath += pitch.note.replace('n','') + pitch.octave;
+
+	filePath += '.wav';
+	console.log(filePath);
+
+	play.sound(filePath);
+}
+
+function processLogDataToSound(logData) {
+	
+	var logArr = logData.split('\n');
+
+		console.log(logArr);
+
+	for (var logFreq of logArr) {
+		if (logFreq.length == 0 || logFreq.indexOf('\u0000\u0000') != -1) 
+			continue;
+
+		var tempObj = JSON.parse(logFreq);
+
+		if (tempObj.octave && tempObj.octave <=6){
+			frequencyHandler(tempObj);
+		}
+	}
 }
 
 function initSocketIO(httpServer,debug)
@@ -69,14 +117,11 @@ function serialListener(debug)
       console.log('open serial communication');
             // Listens to incoming data
         serialPort.on('data', function(data) {
-             receivedData += data.toString();
-          console.log(receivedData);
-         //  if (receivedData .indexOf('E') >= 0 && receivedData .indexOf('B') >= 0) {
-         //   sendData = receivedData .substring(receivedData .indexOf('B') + 1, receivedData .indexOf('E'));
-         //   receivedData = '';
-         // }
-         // send the incoming data to browser with websockets.
-       socketServer.emit('update', receivedData);
+             receivedData = data.toString();
+        console.log(receivedData);
+        processLogDataToSound(receivedData);
+        // send the incoming data to browser with websockets.
+    	socketServer.emit('update', receivedData);
       });  
     });  
 }

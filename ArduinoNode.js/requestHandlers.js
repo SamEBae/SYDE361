@@ -4,12 +4,25 @@
 
 var fs = require('fs'),
 server = require('./server');
-
 function sendInterface(response) {
   console.log("Request handler 'interface' was called.");
   response.writeHead(200, {"Content-Type": "text/html"});
-  var html = fs.readFileSync(__dirname + "/pages/visualfeedback.html")
+  var html = fs.readFileSync(__dirname + "/pages/visualfeedback.html");
+  //var html = fs.readFileSync(__dirname + "/test.html");
   response.end(html);
 }
 
+function sendImages(response) {
+
+	// response.writeHead(200, {})
+	console.log(response);
+	asd;
+	response.end()
+}
+
+function sendNotes(response){
+	//var html = fs.readFileSync(__dirname + "/notes/G");
+
+}
 exports.sendInterface = sendInterface;
+exports.sendNotes = sendNotes;
