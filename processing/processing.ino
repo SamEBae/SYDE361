@@ -69,6 +69,7 @@ void loop() {
   int val = 0;
   delay(50);
   analogWrite(A6,0);
+  analogWrite(A5,0);
   // Reads in the frequency that the user wants
   if (Serial.available()) {
     val = 0;
@@ -116,6 +117,14 @@ void loop() {
       else if (digitalRead(6)) set_freq = 247;
       else if (digitalRead(7)) set_freq = 440;
    */
+  //Calibration button
+  if (digitalRead(7)) {
+    analogWrite(A5,255);
+    analogWrite(A21,127);
+    
+    return;
+  }
+
   if (digitalRead(0)) set_freq = 131;
   else if (digitalRead(1)) set_freq = 165;
   else if (digitalRead(2)) set_freq = 175;
@@ -123,7 +132,7 @@ void loop() {
   else if (digitalRead(4)) set_freq = 220;
   else if (digitalRead(5)) set_freq = 247;
   else if (digitalRead(6)) set_freq = 440;
-  else if (digitalRead(7)) set_freq = 800;//doesn't work right now
+  //else if (digitalRead(7)) set_freq = 800;//doesn't work right now
   /*
   if (fft.available()){
     Serial.println("yes");
