@@ -38,14 +38,6 @@ void setup() {
   delay(250);
   pinMode(A12,INPUT);
   pinMode(A13,INPUT);
-  /*pinMode(0,INPUT);
-  pinMode(1,INPUT);
-  pinMode(2,INPUT);
-  pinMode(3,INPUT);
-  pinMode(4,INPUT);
-  pinMode(5,INPUT);
-  pinMode(6,INPUT);
-  pinMode(7,INPUT);*/
 
   /*notefreq.begin(1);
   sgtl5000_1.enable();
@@ -142,21 +134,21 @@ void loop() {
       set_freq = 220;
       return;
     }
-    else if (buttonRead<27000 && buttonRead>25000) set_freq = 131;
-    else if (buttonRead<32000 && buttonRead>29000) set_freq = 139;
-    else if (buttonRead<38000 && buttonRead>35000) set_freq = 147;
-    else if (buttonRead<47000 && buttonRead>45000) set_freq = 156;
-    else if (buttonRead<62000 && buttonRead>59000) set_freq = 165;
-    else if (buttonRead<66000 && buttonRead>65000) set_freq = 175;
+    else if (buttonRead<27000 && buttonRead>25000) set_freq = 262;
+    else if (buttonRead<32000 && buttonRead>29000) set_freq = 278;
+    else if (buttonRead<38000 && buttonRead>35000) set_freq = 294;
+    else if (buttonRead<47000 && buttonRead>45000) set_freq = 312;
+    else if (buttonRead<62000 && buttonRead>59000) set_freq = 330;
+    else if (buttonRead<66000 && buttonRead>65000) set_freq = 350;
   }
   else if (analogRead(A12) > 1000){
     int buttonRead = analogRead(A12);
-    if (buttonRead<66000 && buttonRead>65000) set_freq = 185;
-    else if (buttonRead<62000 && buttonRead>59000) set_freq = 196;
-    else if (buttonRead<47000 && buttonRead>44000) set_freq = 208;
-    else if (buttonRead<38000 && buttonRead>35000) set_freq = 220;
-    else if (buttonRead<31000 && buttonRead>29000) set_freq = 233;
-    else if (buttonRead<27000 && buttonRead>25000) set_freq = 247;
+    if (buttonRead<66000 && buttonRead>65000) set_freq = 370;
+    else if (buttonRead<62000 && buttonRead>59000) set_freq = 392;
+    else if (buttonRead<47000 && buttonRead>44000) set_freq = 416;
+    else if (buttonRead<38000 && buttonRead>35000) set_freq = 440;
+    else if (buttonRead<31000 && buttonRead>29000) set_freq = 466;
+    else if (buttonRead<27000 && buttonRead>25000) set_freq = 494;
   }
   /*
   if (fft.available()){
