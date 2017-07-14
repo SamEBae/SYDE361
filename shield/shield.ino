@@ -37,37 +37,68 @@ int mode = 0;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  lcd.begin(16, 2);              // start the library
+  lcd.begin(16, 2);              // start the library 
+  lcd.setCursor(0,0);
+  lcd.print("A n");
   lcd.setCursor(8,0);
   lcd.print("|");
 }
 int perfect = 119; //from observation, might need calibration
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  if (analogRead(3) > 200) {
+  lcd.setCursor(1,0);
+  //octave
+  if (analogRead(3)<140) lcd.print("6");
+  else if (analogRead(3)<280) lcd.print("5");
+  else if (analogRead(3)<420) lcd.print("4");
+  else if (analogRead(3)<560) lcd.print("3");
+  else lcd.print("2");
+  
+  if (analogRead(4)>10) {
+    int buttonRead = analogRead(4);
+    //Calibrating
     lcd.setCursor(0,0);
-    lcd.print("CALIBRATING");
-    lcd.setCursor(0,1);
-    lcd.print("Hold for 1s");
-    delay(700);
-    if (analogRead(3) <= 200) {
+    if (buttonRead<86 && buttonRead>74) {
+      lcd.setCursor(0,0);
+      lcd.print("CALIBRATING");
       lcd.setCursor(0,1);
-      lcd.print("Please retry");
-    }
-    else {
-      perfect = analogRead(1);
+      lcd.print("Hold for 1s     ");
+      delay(950);
+      if (analogRead(4)>86 || analogRead(4)<  4) {
+        lcd.setCursor(0,1);
+        lcd.print("Please retry");
+      }
+      else {
+        perfect = analogRead(1);
+        lcd.setCursor(0,1);
+        lcd.print("Thanks, let go  ");
+      }
+      delay(2000);
+      lcd.setCursor(0,0);
+      lcd.print("A n    |        ");
       lcd.setCursor(0,1);
-      lcd.print("Thanks, let go");
+      lcd.print("                ");
+      Serial.print("perfect: ");
+      Serial.println(perfect);
     }
-    delay(2000);
-    lcd.setCursor(0,0);
-    lcd.print("       |       ");
-    lcd.setCursor(0,1);
-    lcd.print("               ");
-    Serial.print("perfect: ");
-    Serial.println(perfect);
+    else if (buttonRead<97 && buttonRead>92) lcd.print("C n");
+    else if (buttonRead<114 && buttonRead>108) lcd.print("C #");
+    else if (buttonRead<138 && buttonRead>131) lcd.print("D n");
+    else if (buttonRead<172 && buttonRead>167) lcd.print("D #");
+    else if (buttonRead<231 && buttonRead>225) lcd.print("E n");
+    else if (buttonRead<348 && buttonRead>342) lcd.print("F n");
   }
+  else if (analogRead(5)>10) {
+    int buttonRead = analogRead(5);//Calibrating
+    lcd.setCursor(0,0);
+    if (buttonRead<348 && buttonRead>342) lcd.print("F #");
+    else if (buttonRead<231 && buttonRead>225) lcd.print("G n");
+    else if (buttonRead<172 && buttonRead>167) lcd.print("G #");
+    else if (buttonRead<138 && buttonRead>131) lcd.print("A n");
+    else if (buttonRead<114 && buttonRead>108) lcd.print("A #");
+    else if (buttonRead<97 && buttonRead>92) lcd.print("B n");
+  }
+  
   if (analogRead(2) > 200) {
     Serial.println(analogRead(1));
     int input = analogRead(1)+(128-perfect)+4;
