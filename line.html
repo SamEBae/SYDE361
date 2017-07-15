@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+  <link href="styles.css" rel="stylesheet" type="text/css"/>
+  <title>Realtime Line Graph</title>
+  <style type="text/css">
+  	#graph {
+	  width: 960px;
+	  height: 480px;
+	}
+
+	.line {
+	  fill: none;
+	  stroke: black;
+	}
+
+	text {
+	  font-size: 0.5rem;
+	}
+  </style>
+</head>
+<body>
+<p id='test'>-</p>
+
+<div>
+ <!--  <svg id='staff-lines'>
+    <g fill="none">
+      <path stroke="black" d="M5 40 l215 0" />
+    </g>
+  </svg> -->
+</div>
+<!--   <svg>
+    <g fill="none">
+      <path stroke="red" d="M5 20 l215 0" />
+      <path stroke="black" d="M5 40 l215 0" />
+      <path stroke="blue" d="M5 60 l215 0" />
+    </g>
+  </svg> -->
+  <svg id="graph" viewBox="0 0 300 60">
+    <g fill="none">
+      <path stroke="black" d="M5 47.5 l215 0" />
+    </g>
+    <g fill="none">
+      <path stroke="black" d="M5 37.5 l215 0" />
+    </g>
+    <g fill="none">
+      <path stroke="black" d="M5 27.5 l215 0" />
+    </g>
+   <!--  <g fill="none">
+      <path stroke="black" d="M5 45 l215 0" />
+    </g>
+    <g fill="none">
+      <path stroke="black" d="M5 35 l215 0" />
+    </g>
+    <g fill="none">
+      <path stroke="black" d="M5 25 l215 0" />
+    </g> -->
+    <g fill="none">
+      <path stroke="black" d="M5 17.5 l215 0" />
+    </g>
+    <g fill="none">
+      <path stroke="black" d="M5 7.5 l215 0" />
+    </g>
+  </svg>
+</body>
+<script src="graph.js" rel="javascript" type="text/javascript"></script>
+<script type="text/javascript">
+// store a bunch of time values for the graph
+var times     = [];
+var timesFake = [];
+var limit     = 0;
+var current   = 5;
+
+const yAxisText = 'frequency/notes';
+const LIM = 1200;
+
+function getRand(){
+  return 261.6 + Math.random()* 232.3;
+  // return 293.7;
+  // return 392.0;
+  // return 415.3;
+  // return 440.0;
+  // return 466.2;
+}
+
+function flat() {
+
+}
+
+function scaleLogarithmically(inputFreq, baseFreq) {
+  // var baseFreq = 196.00;
+  // var inputFreq = 233.1;
+  return Math.log2(inputFreq/baseFreq)*12;
+}
+
+function createGraph() {
+  // this is how time would be stored on the server
+  var now = Date.now();
+
+  // add datum
+  times.push({ 
+    pitch: scaleLogarithmically(349.2, getRand()),
+    time: now
+  });
+
+  timesFake.push({ 
+    pitch: current,
+    time: now
+  });
+
+  limit++;
+
+  if (limit == 100) {
+    limit = 0;
+    if (current == -5) {
+      current = 5;
+    }  else {
+      current--;
+    }
+    var element = document.getElementById('graph-g2');
+    element.outerHTML = '';
+    delete element;
+  }
+
+  // remove old data
+  if (times.length > 1200) {
+    times.shift();
+  }
+
+  if (timesFake.length > 1200) {
+    timesFake.shift();
+
+  }
+
+  // define plot boundaries
+  var width = 300,
+      height = 60
+  var margin = {
+    top: 0, 
+    right: 10, 
+    bottom: 5, 
+    left: 50
+  }
+  var plot = {
+    width: width - margin.right - margin.left,
+    height: height - margin.top - margin.bottom
+  }
+  // x-axis is time
+  var x = d3.time.scale()
+    .range([0, plot.width])
+  // y-axis is numerical
+  var y = d3.scale.linear()
+    .range([plot.height, 0])
+  // set axis scales
+  var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient('bottom')
+    .tickFormat('')
+    .tickSize(0, 0)
+
+  var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient('left')
+    .tickSize(0, 0).ticks(3)
+  // set time span to show
+  var timeCap = width * 40 // 12s
+  var latest = times.length
+    ? times[times.length - 1].time
+    : 0
+  var data = times.filter(function(d) {
+    return d.time >= latest - timeCap
+  });
+
+  var dataFake = timesFake.filter(function(d) {
+    return d.time >= latest - timeCap
+  });
+  
+
+  var yDomain1 = [261.6, 493.9];
+  var yDomain2 = [scaleLogarithmically(349.2,261.6), scaleLogarithmically(349.2,493.9)];
+
+  x.domain([latest - timeCap, latest])
+  y.domain(yDomain2);
+
+  var line = d3.svg.line()
+    .x(function(d) { return x(parseInt(d.time)) })
+    .y(function(d) { return y(d.pitch) });
+
+  // make the graph
+  var svg = d3.select('#graph')
+  var graph = undefined;
+  var graph2= undefined;
+
+  if (d3.select('.graph-g').empty()) {
+    graph = svg.append('g')
+        .attr('class', 'graph-g')
+        .attr('width', plot.width)
+        .attr('height', plot.height)
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+    //add axes
+    graph.append('g')
+        .attr('class', 'x axis')
+        .attr('transform', 'translate(0,' + plot.height + ')')
+        .call(xAxis)
+      .append('text')
+        .attr('dx', (plot.width / 2))
+        .attr('dy', '1em')
+        .style('text-anchor', 'middle')
+        .text('Time')
+
+    graph.append('g')
+        .attr('id', 'y-axis')
+        .call(yAxis)
+      .append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('dx', (0 - plot.height / 2))
+        .attr('dy', '-2.8em')
+        .style('text-anchor', 'middle')
+        .text(yAxisText);
+  } else {
+    graph = d3.select('.graph-g')
+  }
+
+  // remove old line
+  graph.select('.line').remove();
+  //add data line
+  graph.append('path')
+    .datum(data)
+    .attr('class', 'line')
+    .attr('d', line);
+
+  if (d3.select('#graph-g2').empty()) {
+    graph2 = svg.append('g')
+        .attr('id', 'graph-g2')
+        .attr('width', plot.width)
+        .attr('height', plot.height)
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+  } else {
+    graph2 = d3.select('#graph-g2');
+  }
+
+  graph2.append('path')
+    .datum(dataFake)
+    .attr('class', 'line')
+    .attr('d', line)
+    .style("stroke", "red");
+
+}
+
+var startGraph = window.setInterval(createGraph, 50);
+
+function getYBox() {
+  return document.getElementById('y-axis').getBBox();
+}
+
+</script>
+</html>
