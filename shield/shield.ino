@@ -34,12 +34,15 @@ int read_LCD_buttons()
  return btnNONE;  // when all others fail, return this...
 }
 int mode = 0;
+int octave = 4;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   lcd.begin(16, 2);              // start the library 
   lcd.setCursor(0,0);
   lcd.print("A n");
+  lcd.setCursor(1,0);
+  lcd.print(octave);
   lcd.setCursor(8,0);
   lcd.print("|");
 }
@@ -48,15 +51,9 @@ int perfect = 119; //from observation, might need calibration
 void loop() {
   lcd.setCursor(1,0);
   //octave
-  if (analogRead(3)<140) lcd.print("6");
-  else if (analogRead(3)<280) lcd.print("5");
-  else if (analogRead(3)<420) lcd.print("4");
-  else if (analogRead(3)<560) lcd.print("3");
-  else lcd.print("2");
   
   if (analogRead(3)>10) {
     int buttonRead = analogRead(3);
-    Serial.println(buttonRead);
     //Calibrating
     lcd.setCursor(0,0);
     if (buttonRead<86 && buttonRead>74) {
@@ -98,7 +95,21 @@ void loop() {
     else if (buttonRead<138 && buttonRead>130) lcd.print("A n");
     else if (buttonRead<114 && buttonRead>108) lcd.print("A #");
     else if (buttonRead<97 && buttonRead>92) lcd.print("B n");
+    else if (buttonRead<86 && buttonRead>76) {
+      if (octave > 2) {
+        octave -=1;
+        delay(200);
+      }
+    }
+    else if (buttonRead<77 && buttonRead>70) {
+      if (octave < 6) {
+        octave +=1;
+        delay(200);
+      }
+    }
   }
+  lcd.setCursor(1,0);
+  lcd.print(octave);
   
   if (analogRead(2) > 200) {
     Serial.println(analogRead(1));

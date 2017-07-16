@@ -56,7 +56,8 @@ const int GATE_PIN = A16;
 const int AUDIO_PIN = A14;
 const int ENVELOPE_PIN = A15;
 
-int set_freq = 220; // used to be 880
+int set_freq = 440; // used to be 880
+int octave = 0;
 
 void loop() {
   int digit = 0;
@@ -133,7 +134,21 @@ void loop() {
     else if (buttonRead<38000 && buttonRead>35000) set_freq = 440;
     else if (buttonRead<33000 && buttonRead>29000) set_freq = 466;
     else if (buttonRead<28000 && buttonRead>25000) set_freq = 494;
+    else if (buttonRead<24000 && buttonRead>22000) {
+      if (octave > -2) {
+        octave -=1;
+        delay(200);
+      }
+    }
+    else if (buttonRead<22000 && buttonRead>20000) {
+      if (octave < 2) {
+        octave +=1;
+        delay(200);
+      }
+    }
   }
+  int new_set_freq = set_freq*pow(2.0,octave);
+  
   /*
   if (fft.available()){
     Serial.println("yes");
@@ -146,18 +161,18 @@ void loop() {
     float prob = notefreq.probability();
    
     tuned_note n = freq_to_note(freq, pitch_freqs);
-    //tuned_note n = freq_to_note(set_freq, pitch_freqs);
+    //tuned_note n = freq_to_note(new_set_freq, pitch_freqs);
     int index = n.getPitch();
     double distance = n.getDistance();      
     note_name note = *pitch_names[index];
-    note_name note_desired = *pitch_names[freq_to_note(set_freq, pitch_freqs).getPitch()];
+    note_name note_desired = *pitch_names[freq_to_note(new_set_freq, pitch_freqs).getPitch()];
     
     compare_with_desired_pitch(set_freq, freq);
-    //Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), set_freq, freq, note.getName(), note.getModifier() , note.getOctave()); 
-    Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), set_freq, freq, note_desired.getName(), note_desired.getModifier() , note_desired.getOctave()); 
+    //Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), new_set_freq, freq, note.getName(), note.getModifier() , note.getOctave()); 
+    Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), new_set_freq, freq, note_desired.getName(), note_desired.getModifier() , note_desired.getOctave()); 
     Serial.println();
     
-    //serialize_as_JSON(set_freq, freq, note.getName(), note.getModifier(), note.getOctave());
+    //serialize_as_JSON(new_set_freq, freq, note.getName(), note.getModifier(), note.getOctave());
     //Serial.println(note.getName());
   }
 }
