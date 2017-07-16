@@ -9,7 +9,7 @@
 #include "tuned_note.h"
 
 // GUItool: begin automatically generated code
-AudioInputAnalog         adc0(22);
+AudioInputAnalog         adc(21);
 //AudioInputUSB            usb1;           //xy=71,90
 AudioFilterBiquad        biquad1;        //xy=229,169
 //AudioOutputUSB           usb2;           //xy=448,94
@@ -39,7 +39,7 @@ void setup() {
   pinMode(A12,INPUT);
   pinMode(A13,INPUT);
 
-  /*notefreq.begin(1);
+  notefreq.begin(1);
   sgtl5000_1.enable();
   sgtl5000_1.inputSelect(AUDIO_INPUT_LINEIN);
   sgtl5000_1.volume(0.5);
@@ -48,7 +48,7 @@ void setup() {
   // Pitch detection:
   float reference = 440.0;
   pitch_freqs = get_pitch_freqs(reference);
-  pitch_names = get_pitch_names();*/
+  pitch_names = get_pitch_names();
 }
 
 const int GATE_ON = 1023;
@@ -62,7 +62,7 @@ void loop() {
   int digit = 0;
   int val = 0;
   delay(50);
-  //analogWrite(A6,0);
+  analogWrite(A6,0);
   // Reads in the frequency that the user wants
   if (Serial.available()) {
     val = 0;
@@ -110,23 +110,7 @@ void loop() {
       else if (digitalRead(6)) set_freq = 247;
       else if (digitalRead(7)) set_freq = 440;
    */
-  //Calibration button
-  /*if (digitalRead(7)) {
-    analogWrite(A5,255);
-    analogWrite(A21,127);
-    
-    return;
-  }
-
-  if (digitalRead(0)) set_freq = 131;
-  else if (digitalRead(1)) set_freq = 165;
-  else if (digitalRead(2)) set_freq = 175;
-  else if (digitalRead(3)) set_freq = 196;
-  else if (digitalRead(4)) set_freq = 220;
-  else if (digitalRead(5)) set_freq = 247;
-  else if (digitalRead(6)) set_freq = 440;
-  //else if (digitalRead(7)) set_freq = 800;//doesn't work right now*/
-  if (analogRead(A13) > 1000) {
+  if (analogRead(A13) > 3000) {
     int buttonRead = analogRead(A13);
     //Calibration button
     if (buttonRead<24000 && buttonRead>21000) {
@@ -141,14 +125,14 @@ void loop() {
     else if (buttonRead<62000 && buttonRead>59000) set_freq = 330;
     else if (buttonRead<66000 && buttonRead>65000) set_freq = 350;
   }
-  else if (analogRead(A12) > 1000){
+  else if (analogRead(A12) > 3000){
     int buttonRead = analogRead(A12);
     if (buttonRead<66000 && buttonRead>65000) set_freq = 370;
     else if (buttonRead<62000 && buttonRead>59000) set_freq = 392;
     else if (buttonRead<47000 && buttonRead>44000) set_freq = 416;
     else if (buttonRead<38000 && buttonRead>35000) set_freq = 440;
-    else if (buttonRead<31000 && buttonRead>29000) set_freq = 466;
-    else if (buttonRead<27000 && buttonRead>25000) set_freq = 494;
+    else if (buttonRead<33000 && buttonRead>29000) set_freq = 466;
+    else if (buttonRead<28000 && buttonRead>25000) set_freq = 494;
   }
   /*
   if (fft.available()){
