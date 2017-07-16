@@ -116,7 +116,7 @@ void loop() {
     //Calibration button
     if (buttonRead<24000 && buttonRead>21000) {
       analogWrite(A21,127);
-      set_freq = 220;
+      set_freq = 440;
       return;
     }
     else if (buttonRead<27000 && buttonRead>25000) set_freq = 262;
@@ -167,7 +167,7 @@ void loop() {
     note_name note = *pitch_names[index];
     note_name note_desired = *pitch_names[freq_to_note(new_set_freq, pitch_freqs).getPitch()];
     
-    compare_with_desired_pitch(set_freq, freq);
+    compare_with_desired_pitch(new_set_freq, freq);
     //Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), new_set_freq, freq, note.getName(), note.getModifier() , note.getOctave()); 
     Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), new_set_freq, freq, note_desired.getName(), note_desired.getModifier() , note_desired.getOctave()); 
     Serial.println();

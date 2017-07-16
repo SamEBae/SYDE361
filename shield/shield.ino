@@ -67,6 +67,7 @@ void loop() {
         lcd.print("Please retry");
       }
       else {
+        Serial.println(analogRead(1));
         perfect = analogRead(1);
         lcd.setCursor(0,1);
         lcd.print("Thanks, let go  ");
