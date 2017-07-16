@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+  <link href="styles.css" rel="stylesheet" type="text/css"/>
+  <!-- <title>Realtime Line Graph</title> -->
+  <style type="text/css">
+  	#graph {
+	  width: 960px;
+	  height: 480px;
+	}
+
+	.line {
+	  fill: none;
+	  stroke: black;
+	}
+
+	text {
+	  font-size: 0.5rem;
+	}
+
+  .background {
+    background: #565656;
+  }
+
+  .theme-text {
+    color: #E6E6E6;
+  }
+
+  .line-color {
+    color: #BFBFBF;
+  }
+  .wrong-color {
+    color: #8E13FF;
+  }
+
+  .staff-color {
+    color: #616161;
+  }
+
+  .notes-color {
+    color: #D8D8D8;
+  }
+
+  .button-color {
+    color: #51E2C1;
+  }
+
+  </style>
+</head>
+<body class='background'>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+<p id='test'>-</p>
+
+<div>
+</div>
+  <svg id="graph" viewBox="0 0 300 60">
+    <g fill="none">
+      <path stroke="#616161" d="M5 47.5 l215 0" />
+    </g>
+    <g fill="none">
+      <path stroke="#616161" d="M5 37.5 l215 0" />
+    </g>
+    <g fill="none">
+      <path stroke="#616161" d="M5 27.5 l215 0" />
+    </g>
+    <g fill="none">
+      <path stroke="#616161" d="M5 17.5 l215 0" />
+    </g>
+    <g fill="none">
+      <path stroke="#616161" d="M5 7.5 l215 0" />
+    </g>
+  </svg>
+</body>
+<script src="graph.js" rel="javascript" type="text/javascript"></script>
+<script type="text/javascript">
+// store a bunch of time values for the graph
+var times     = [];
+var timesFake = [];
+var limit     = 0;
+var current   = 5;
+var noteArray = [-1. -3, -5, -1, -3, -5, 0, -5, -5, -5, -3,-3,-3,-1,-3,-5];//[1,-1,1,-1,1,2];
+var hotcrossbuns = [-1. -3, -5, -1, -3, -5, 0, -5, -5, -5, -3,-3,-3,-1,-3,-5];
+var noteIndex = 0;
+var startTime = 0;
+
+//noteArray = hotcrossbuns;
+
+const yAxisText = 'frequency/notes';
+const LIM = 240;
+const refreshRate = 50;
+const noteChangeLim = 1000/refreshRate;
+
+function getRand(){
+  return 261.6 + Math.random()* 232.3;
+  // return 293.7;
+  // return 392.0;
+  // return 415.3;
+  // return 440.0;
+  // return 466.2;
+}
+
+function flat() {
+
+}
+
+function scaleLogarithmically(inputFreq, baseFreq) {
+  // var baseFreq = 196.00;
+  // var inputFreq = 233.1;
+  return Math.log2(inputFreq/baseFreq)*12;
+}
+
+function createGraph(pitchData) {
+  // this is how time would be stored on the server
+  var now = Date.now();
+  // now = pitchJSON.timestamp;
+  // add datum
+
+  if (pitchData) {
+    times.push({ 
+      pitch: scaleLogarithmically(698.5, pitchData.actual), //scaleLogarithmically(349.2, getRand()),
+      time: now
+    });
+  } else {
+    // times.push({ 
+    //   pitch: 0, //scaleLogarithmically(349.2, getRand()),
+    //   time: now
+    // });
+
+  }
+  
+
+  timesFake.push({ 
+    pitch: noteArray[noteIndex],
+    time: now
+  });
+
+  limit++;
+
+  if (limit == noteChangeLim) {
+    limit = 0;
+    if (current == -5) {
+      current = 5;
+    }  else {
+      current--;
+    }
+
+    if (noteIndex == noteArray.length-1) {
+      noteIndex = 0;
+    } else {
+      noteIndex++;
+    }
+  }
+
+  // remove old data
+  if (times.length > LIM) {
+    times.shift();
+  }
+
+  if (timesFake.length > LIM) {
+    timesFake.shift();
+  }
+
+  // define plot boundaries
+  var width = 300,
+      height = 60
+  var margin = {
+    top: 0, 
+    right: 10, 
+    bottom: 5, 
+    left: 50
+  }
+  var plot = {
+    width: width - margin.right - margin.left,
+    height: height - margin.top - margin.bottom
+  }
+  // x-axis is time
+  var x = d3.time.scale()
+    .range([0, plot.width])
+  // y-axis is numerical
+  var y = d3.scale.linear()
+    .range([plot.height, 0])
+  // set axis scales
+  var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient('bottom')
+    .tickFormat('')
+    .tickSize(0, 0)
+
+  var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient('left')
+    .tickSize(0, 0).ticks(3)
+  // set time span to show
+  var timeCap = width * 40 // 12s
+  var latest = timesFake.length
+    ? timesFake[timesFake.length - 1].time
+    : 0
+  var data = times.filter(function(d) {
+    return d.time >= latest - timeCap
+  });
+
+  var dataFake = timesFake.filter(function(d) {
+    return d.time >= latest - timeCap
+  });
+  
+
+  var yDomain1 = [261.6, 493.9];
+  var yDomain2 = [scaleLogarithmically(349.2,493.9), scaleLogarithmically(349.2,261.6)];
+
+  x.domain([latest - timeCap, latest])
+  y.domain(yDomain2);
+
+  var line = d3.svg.line()
+    .x(function(d) { return x(parseInt(d.time)) })
+    .y(function(d) { return y(d.pitch) });
+
+  // make the graph
+  var svg = d3.select('#graph')
+  var graph = undefined;
+  var graph2= undefined;
+
+  if (d3.select('.graph-g').empty()) {
+    graph = svg.append('g')
+        .attr('class', 'graph-g')
+        .attr('width', plot.width)
+        .attr('height', plot.height)
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+    //add axes
+    graph.append('g')
+        .attr('class', 'x axis')
+        .attr('transform', 'translate(0,' + plot.height + ')')
+        .call(xAxis)
+      .append('text')
+        .attr('dx', (plot.width / 2))
+        .attr('dy', '1em')
+        .style('text-anchor', 'middle')
+        .attr('fill', '#E6E6E6')
+        .text('Time')
+
+    graph.append('g')
+        .attr('id', 'y-axis')
+        .attr('fill', '#E6E6E6')
+        .call(yAxis)
+      .append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('dx', (0 - plot.height / 2))
+        .attr('dy', '-2.8em')
+        .style('text-anchor', 'middle')
+        .attr('fill', '#E6E6E6')
+        .text(yAxisText);
+  } else {
+    graph = d3.select('.graph-g')
+  }
+
+  // remove old line
+  graph.select('.line').remove();
+  //add data line
+  graph.append('path')
+    .datum(data)
+    .attr('class', 'line')
+    .attr('d', line)
+    .style("stroke", '#BFBFBF');
+
+  if (d3.select('#graph-g2').empty()) {
+    graph2 = svg.append('g')
+        .attr('id', 'graph-g2')
+        .attr('width', plot.width)
+        .attr('height', plot.height)
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+  } else {
+    graph2 = d3.select('#graph-g2');
+  }
+
+  const noteColor = '#D8D8D8';
+  const noteColorRealTime = '#8E13FF';
+  clearNoteSVG();
+
+  graph2.append('path')
+    .datum(dataFake)
+    .attr('class', 'line')
+    .attr('d', line)
+    .style("stroke", noteColorRealTime);
+}
+
+var startGraph = window.setInterval(createGraph, refreshRate);
+
+function getYBox() {
+  return document.getElementById('y-axis').getBBox();
+}
+
+function clearNoteSVG() {
+  var element = document.getElementById('graph-g2');
+  element.innerHTML = '';
+  delete element;
+}
+
+function initSocketIO() {
+        iosocket = io.connect();
+        iosocket.on('onconnection', function(value) {
+                // recieve changed values by other client from server
+                iosocket.on('update', function (recievedData) {
+                    
+                    var parsedData  = recievedData,
+                        dataSplited = recievedData.split('\n');
+                    if (IsJSONString(dataSplited[0])) {
+                        for (let data of dataSplited) {
+                            if (IsJSONString(data)){
+                                var JSONData = JSON.parse(data), 
+                                    difference = JSONData.actual - JSONData.desired,
+                                    tempObj = {},
+                                    marginOfError = JSONData.actual * 0.085;
+
+                                if (!startTime)
+                                  startTime = JSONData.timestamp;
+
+                                // search for index b/w 
+                                console.log(JSONData);
+                                //console.log([lookForTime(), times.length-1]);
+
+                                createGraph(JSONData);
+                                // var modIndex = lookForTime();
+                                // if (modIndex) {
+                                //   times[modIndex] = JSONData.actual;
+                                // }
+                                // console.log(modIndex);
+                                // console.log(JSONData.actual);
+
+                            }
+                        }
+                        
+                    }
+                    
+                });
+        });
+    }
+
+initSocketIO();
+
+function lookForTime() {
+  var searchBetweenTime = Date.now();// - startTime;
+
+  console.log([times[0].time, searchBetweenTime, times[times.length-1].time]);
+  var high = times.length-1;
+  var low = 0;
+
+  while (low <= high) {
+    var midIndex = Math.floor((high+low)/2);
+    var midElm = times[midIndex];
+
+    if (midElm.time + 50 < searchBetweenTime) {
+      return midIndex;
+    } else if (midElm.time > searchBetweenTime ){
+      high = midIndex-1;
+    } else {
+      low = midIndex+1;
+    }
+
+  }
+}
+
+function IsJSONString(str) {
+        try {
+            JSON.parse(str);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
+
+</script>
+</html>
