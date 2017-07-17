@@ -67,7 +67,6 @@ void loop() {
         lcd.print("Please retry");
       }
       else {
-        Serial.println(analogRead(1));
         perfect = analogRead(1);
         lcd.setCursor(0,1);
         lcd.print("Thanks, let go  ");
@@ -77,8 +76,8 @@ void loop() {
       lcd.print("A n    |        ");
       lcd.setCursor(0,1);
       lcd.print("                ");
-      Serial.print("perfect: ");
-      Serial.println(perfect);
+      //Serial.print("perfect: ");
+      //Serial.println(perfect);
     }
     else if (buttonRead<97 && buttonRead>89) lcd.print("C n");
     else if (buttonRead<114 && buttonRead>100) lcd.print("C #");
@@ -113,7 +112,8 @@ void loop() {
   lcd.print(octave);
   
   if (analogRead(2) > 200) {
-    Serial.println(analogRead(1));
+    //Serial.println(analogRead(1));
+    //Serial.println("bbbb");
     int input = analogRead(1)+(128-perfect)+4;
     if (input > 255) input = 255;
     if (input < 0) input = 0;

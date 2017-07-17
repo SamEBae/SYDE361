@@ -125,8 +125,12 @@ void loop() {
     else if (buttonRead<47000 && buttonRead>45000) set_freq = 312;
     else if (buttonRead<62000 && buttonRead>59000) set_freq = 330;
     else if (buttonRead<66000 && buttonRead>65000) set_freq = 350;
-  }
-  else if (analogRead(A12) > 3000){
+    Serial.println(set_freq);
+
+    Serial.printf("{\"note\": \"%d\" }", set_freq); 
+    Serial.println();
+    
+  } else if (analogRead(A12) > 3000){
     int buttonRead = analogRead(A12);
     if (buttonRead<66000 && buttonRead>65000) set_freq = 370;
     else if (buttonRead<62000 && buttonRead>59000) set_freq = 392;
@@ -146,6 +150,8 @@ void loop() {
         delay(200);
       }
     }
+    Serial.printf("{\"note\": \"%d\" }", set_freq); 
+    Serial.println();
   }
   int new_set_freq = set_freq*pow(2.0,octave);
   

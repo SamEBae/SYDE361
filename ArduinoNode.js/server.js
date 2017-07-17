@@ -9,6 +9,7 @@ var play = require('play');
 var socketServer;
 var serialPort;
 var portName = '/dev/cu.usbmodem2851921'; //change this to your Arduino port
+var portName2 = '/dev/cu.usbmodem1411';
 var sendData = "";
 
 // handle contains locations to browse to (vote and poll); pathnames.
@@ -34,7 +35,8 @@ function startServer(route,handle,debug)
 	//frequencyHandler(pitchTest);
 	//frequencyHandler(pitchTest2);
 
-	serialListener(debug);
+	serialListener(debug, portName);
+	//serialListener(debug, portName2)
 	initSocketIO(httpServer,debug);
 }
 
@@ -101,7 +103,7 @@ function initSocketIO(httpServer,debug)
 }
 
 // Listen to serial port
-function serialListener(debug)
+function serialListener(debug, portName)
 {
     var receivedData = "";
     serialPort = new SerialPort(portName, {

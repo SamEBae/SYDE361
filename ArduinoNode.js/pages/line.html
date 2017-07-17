@@ -45,34 +45,47 @@
   }
 
   .button-color {
-    color: #51E2C1;
+    background: #51E2C1;
+    color: #E6E6E6;
   }
 
+  #melody-button {
+    width: 250px;
+    font-size: 1.5em;
+    margin-left: 40%;
+    margin-right: 40%;
+    border: 0;
+  }
+  #melody-selection {
+    color: #E6E6E6;
+    position: absolute;
+    font-size: 2em;
+  }
   </style>
 </head>
 <body class='background'>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
-<p id='test'>-</p>
+<svg id="graph" viewBox="0 0 300 60">
+  <g fill="none">
+    <path stroke="#616161" d="M5 47.5 l215 0" />
+  </g>
+  <g fill="none">
+    <path stroke="#616161" d="M5 37.5 l215 0" />
+  </g>
+  <g fill="none">
+    <path stroke="#616161" d="M5 27.5 l215 0" />
+  </g>
+  <g fill="none">
+    <path stroke="#616161" d="M5 17.5 l215 0" />
+  </g>
+  <g fill="none">
+    <path stroke="#616161" d="M5 7.5 l215 0" />
+  </g>
+</svg>
+<div id='melody-selection'>
 
-<div>
 </div>
-  <svg id="graph" viewBox="0 0 300 60">
-    <g fill="none">
-      <path stroke="#616161" d="M5 47.5 l215 0" />
-    </g>
-    <g fill="none">
-      <path stroke="#616161" d="M5 37.5 l215 0" />
-    </g>
-    <g fill="none">
-      <path stroke="#616161" d="M5 27.5 l215 0" />
-    </g>
-    <g fill="none">
-      <path stroke="#616161" d="M5 17.5 l215 0" />
-    </g>
-    <g fill="none">
-      <path stroke="#616161" d="M5 7.5 l215 0" />
-    </g>
-  </svg>
+<button id='melody-button' class='button-color' onclick="inputMelody();">Start<!-- Input Melody --></button>
 </body>
 <script src="graph.js" rel="javascript" type="text/javascript"></script>
 <script type="text/javascript">
@@ -81,30 +94,100 @@ var times     = [];
 var timesFake = [];
 var limit     = 0;
 var current   = 5;
-var noteArray = [-1. -3, -5, -1, -3, -5, 0, -5, -5, -5, -3,-3,-3,-1,-3,-5];//[1,-1,1,-1,1,2];
-var hotcrossbuns = [-1. -3, -5, -1, -3, -5, 0, -5, -5, -5, -3,-3,-3,-1,-3,-5];
+var noteArray = [-1, -3, -5, -1, -3, -5];
+var fulloctave = [-5,-3,-1,0,1,3,5];
+//noteArray = fulloctave.slice();
+
+var hotcrossbuns = [-1, -3, -5, -1, -3, -5].reverse();//[-1. -3, -5, -1, -3, -5, 0, -5, -5, -5, -3,-3,-3,-1,-3,-5];
+var customMelody = [];
 var noteIndex = 0;
 var startTime = 0;
 
-//noteArray = hotcrossbuns;
 
+// E D C E D C. CCC DDD E D C
+// F- 174.6
+// -1, -3, -5, -1, -3, -5 
 const yAxisText = 'frequency/notes';
 const LIM = 240;
 const refreshRate = 50;
 const noteChangeLim = 1000/refreshRate;
+const melodyNoteLimit = 5;
+const noteHash = {
+  '262':-5,
+  '278':-4,
+  '294':-3,
+  '312':-2,
+  '330':-1,
+  '350':0,
+  '370':1,
+  '392':2,
+  '416':3,
+  '440':4,
+  '466':5,
+  '494':6,
+};
+const noteStringHash = {
+  '-5': 'A'
+
+}
+
+var GLOBALERRORMULTIPLER = 1;
+
+function randomNoise() {
+
+  GLOBALERRORMULTIPLER = Math.random() * 0.5;
+
+  var sign = 1,
+      signRand = Math.random();
+  if (signRand < 0.5){
+    sign = -sign;
+  }
+
+  return sign * GLOBALERRORMULTIPLER;
+}
+
+function resetMelody() {
+  customMelody = [];
+}
+
+function addMelody(noteFrequency) {
+  var mappedNote = noteHash[noteFrequency];
+
+  if (mappedNote != customMelody[customMelody.length-1]){
+    customMelody.push(mappedNote);
+  }
+  showMelody();
+}
+
+function showMelody() {
+  var melodyText = document.getElementById('melody-selection');
+  var stringNote = '';
+
+  melodyText.innerHTML = '';
+  var currentLeft = 40;
+  var verticalOffset = 180;
+  var widthScalingFactor = 20;
+  var verticalScalingFactor = 20;
+
+  // top 125
+  // bot 292.75
+
+  for (var melody of customMelody) {
+    //stringNote += melody.toString();
+    var tempNode = document.createElement('p');
+    tempNode.innerHTML = '0';
+    tempNode.style.top = melody * -(verticalScalingFactor - 5) + verticalOffset + 'px';
+    tempNode.style.position = 'fixed';
+    tempNode.style.left =  currentLeft + 'px';
+    melodyText.appendChild(tempNode);
+    currentLeft += widthScalingFactor;
+  }
+}
 
 function getRand(){
   return 261.6 + Math.random()* 232.3;
-  // return 293.7;
-  // return 392.0;
-  // return 415.3;
-  // return 440.0;
-  // return 466.2;
 }
 
-function flat() {
-
-}
 
 function scaleLogarithmically(inputFreq, baseFreq) {
   // var baseFreq = 196.00;
@@ -117,21 +200,24 @@ function createGraph(pitchData) {
   var now = Date.now();
   // now = pitchJSON.timestamp;
   // add datum
-
   if (pitchData) {
-    times.push({ 
-      pitch: scaleLogarithmically(698.5, pitchData.actual), //scaleLogarithmically(349.2, getRand()),
-      time: now
-    });
+
+    // reject if over 5 or below -5
+    var scaled = scaleLogarithmically(698.5, pitchData.actual);
+
+    if (scaled <= 5 && scaled >= -5)  {
+      times.push({ 
+        pitch: scaled, //scaleLogarithmically(349.2, getRand()),
+        time: now
+      });
+    }   
   } else {
     // times.push({ 
-    //   pitch: 0, //scaleLogarithmically(349.2, getRand()),
+    //   pitch: null,//noteArray[noteIndex] + randomNoise() + randomNoise() + randomNoise() * 2, //scaleLogarithmically(349.2, getRand()),
     //   time: now
     // });
-
   }
   
-
   timesFake.push({ 
     pitch: noteArray[noteIndex],
     time: now
@@ -232,25 +318,25 @@ function createGraph(pitchData) {
     graph.append('g')
         .attr('class', 'x axis')
         .attr('transform', 'translate(0,' + plot.height + ')')
-        .call(xAxis)
+        //.call(xAxis)
       .append('text')
         .attr('dx', (plot.width / 2))
         .attr('dy', '1em')
         .style('text-anchor', 'middle')
         .attr('fill', '#E6E6E6')
-        .text('Time')
+//        .text('Time')
 
     graph.append('g')
         .attr('id', 'y-axis')
         .attr('fill', '#E6E6E6')
-        .call(yAxis)
+       // .call(yAxis)
       .append('text')
         .attr('transform', 'rotate(-90)')
         .attr('dx', (0 - plot.height / 2))
         .attr('dy', '-2.8em')
         .style('text-anchor', 'middle')
         .attr('fill', '#E6E6E6')
-        .text(yAxisText);
+    //    .text(yAxisText);
   } else {
     graph = d3.select('.graph-g')
   }
@@ -285,7 +371,6 @@ function createGraph(pitchData) {
     .style("stroke", noteColorRealTime);
 }
 
-var startGraph = window.setInterval(createGraph, refreshRate);
 
 function getYBox() {
   return document.getElementById('y-axis').getBBox();
@@ -308,25 +393,35 @@ function initSocketIO() {
                     if (IsJSONString(dataSplited[0])) {
                         for (let data of dataSplited) {
                             if (IsJSONString(data)){
-                                var JSONData = JSON.parse(data), 
-                                    difference = JSONData.actual - JSONData.desired,
-                                    tempObj = {},
-                                    marginOfError = JSONData.actual * 0.085;
+                                var JSONData = JSON.parse(data);
 
-                                if (!startTime)
-                                  startTime = JSONData.timestamp;
+                                console.log(JSONData.note);
 
-                                // search for index b/w 
-                                console.log(JSONData);
-                                //console.log([lookForTime(), times.length-1]);
+                                // note
+                                if (!isNaN(JSONData.note)) {
+                                  addMelody(JSONData.note);
+                                } else if (JSONData.actual) {
+                                  console.log('sss');
+                                  // pitch
+                                  var difference = JSONData.actual - JSONData.desired,
+                                      tempObj = {},
+                                      marginOfError = JSONData.actual * 0.085;
 
-                                createGraph(JSONData);
-                                // var modIndex = lookForTime();
-                                // if (modIndex) {
-                                //   times[modIndex] = JSONData.actual;
-                                // }
-                                // console.log(modIndex);
-                                // console.log(JSONData.actual);
+                                  if (!startTime)
+                                    startTime = JSONData.timestamp;
+
+                                  // search for index b/w 
+                                  //console.log([lookForTime(), times.length-1]);
+
+                                  createGraph(JSONData);
+                                  // var modIndex = lookForTime();
+                                  // if (modIndex) {
+                                  //   times[modIndex] = JSONData.actual;
+                                  // }
+                                  // console.log(modIndex);
+                                  // console.log(JSONData.actual);
+                                }
+                                
 
                             }
                         }
@@ -362,13 +457,24 @@ function lookForTime() {
 }
 
 function IsJSONString(str) {
-        try {
-            JSON.parse(str);
-        } catch (e) {
-            return false;
-        }
-        return true;
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
     }
+    return true;
+}
+
+function inputMelody(){
+  if (document.getElementById('melody-selection'))
+    //document.getElementById('melody-selection').innerHTML = '';
+
+  var button = document.getElementById('melody-button');
+  button.style.display = 'none';
+
+  noteArray = customMelody.slice();
+  var startGraph = window.setInterval(createGraph, refreshRate);
+}
 
 </script>
 </html>
