@@ -85,7 +85,7 @@
 <div id='melody-selection'>
 
 </div>
-<button id='melody-button' class='button-color' onclick="inputMelody();">Start<!-- Input Melody --></button>
+<!-- <button id='melody-button' class='button-color' onclick="inputMelody();">Start<!-- Input Melody --></button> -->
 </body>
 <script src="graph.js" rel="javascript" type="text/javascript"></script>
 <script type="text/javascript">
@@ -96,6 +96,7 @@ var limit     = 0;
 var current   = 5;
 var noteArray = [-1, -3, -5, -1, -3, -5];
 var fulloctave = [-5,-3,-1,0,1,3,5];
+noteArray = [4];
 //noteArray = fulloctave.slice();
 
 var hotcrossbuns = [-1, -3, -5, -1, -3, -5].reverse();//[-1. -3, -5, -1, -3, -5, 0, -5, -5, -5, -3,-3,-3,-1,-3,-5];
@@ -201,10 +202,9 @@ function createGraph(pitchData) {
   // now = pitchJSON.timestamp;
   // add datum
   if (pitchData) {
-
+    // scaleLogarithmically(87.31, 200)
     // reject if over 5 or below -5
-    var scaled = scaleLogarithmically(698.5, pitchData.actual);
-
+    var scaled = scaleLogarithmically(pitchData.actual, 185.0);
     if (scaled <= 5 && scaled >= -5)  {
       times.push({ 
         pitch: scaled, //scaleLogarithmically(349.2, getRand()),
@@ -395,13 +395,11 @@ function initSocketIO() {
                             if (IsJSONString(data)){
                                 var JSONData = JSON.parse(data);
 
-                                console.log(JSONData.note);
 
                                 // note
                                 if (!isNaN(JSONData.note)) {
                                   addMelody(JSONData.note);
                                 } else if (JSONData.actual) {
-                                  console.log('sss');
                                   // pitch
                                   var difference = JSONData.actual - JSONData.desired,
                                       tempObj = {},
@@ -437,7 +435,6 @@ initSocketIO();
 function lookForTime() {
   var searchBetweenTime = Date.now();// - startTime;
 
-  console.log([times[0].time, searchBetweenTime, times[times.length-1].time]);
   var high = times.length-1;
   var low = 0;
 

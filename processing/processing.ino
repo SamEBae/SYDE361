@@ -9,20 +9,17 @@
 #include "tuned_note.h"
 
 // GUItool: begin automatically generated code
-AudioInputAnalog         adc(21);
-//AudioInputUSB            usb1;           //xy=71,90
+AudioInputUSB            usb1;           //xy=71,90
 AudioFilterBiquad        biquad1;        //xy=229,169
 //AudioOutputUSB           usb2;           //xy=448,94
 AudioOutputI2S           i2s1;           //xy=453,164
-AudioAnalyzeFFT256       fft;       //xy=335,137
 AudioAnalyzeNoteFrequency notefreq;
-AudioConnection          patchCord1(adc, 0, i2s1, 0);
-//AudioConnection          patchCord2(adc, 0, usb2, 0);
-AudioConnection          patchCord3(adc, 1, biquad1, 0);
+AudioConnection          patchCord1(usb1, 0, i2s1, 0);
+//AudioConnection          patchCord2(usb1, 0, usb2, 0);
+AudioConnection          patchCord3(usb1, 1, biquad1, 0);
 //AudioConnection          patchCord4(biquad1, 0, usb2, 1);
 AudioConnection          patchCord5(biquad1, 0, i2s1, 1);
-AudioConnection          patchCord6(adc, 0, notefreq ,0);
-AudioConnection          patchCord7(adc, fft);
+AudioConnection          patchCord6(usb1, 0, notefreq ,0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=219,29
 // GUItool: end automatically generated code
 
@@ -125,7 +122,6 @@ void loop() {
     else if (buttonRead<47000 && buttonRead>45000) set_freq = 312;
     else if (buttonRead<62000 && buttonRead>59000) set_freq = 330;
     else if (buttonRead<66000 && buttonRead>65000) set_freq = 350;
-    Serial.println(set_freq);
 
     Serial.printf("{\"note\": \"%d\" }", set_freq); 
     Serial.println();
@@ -162,10 +158,11 @@ void loop() {
       Serial.println(6*fft.read(i));
     }
   }*/
+ 
   if (notefreq.available()) {
     int freq = notefreq.read();
     float prob = notefreq.probability();
-   
+
     tuned_note n = freq_to_note(freq, pitch_freqs);
     //tuned_note n = freq_to_note(new_set_freq, pitch_freqs);
     int index = n.getPitch();
