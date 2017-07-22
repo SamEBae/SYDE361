@@ -9,20 +9,17 @@
 #include "tuned_note.h"
 
 // GUItool: begin automatically generated code
-AudioInputAnalog         adc(21);
-//AudioInputUSB            usb1;           //xy=71,90
+AudioInputUSB            usb1;           //xy=71,90
 AudioFilterBiquad        biquad1;        //xy=229,169
 //AudioOutputUSB           usb2;           //xy=448,94
 AudioOutputI2S           i2s1;           //xy=453,164
-AudioAnalyzeFFT256       fft;       //xy=335,137
 AudioAnalyzeNoteFrequency notefreq;
-AudioConnection          patchCord1(adc, 0, i2s1, 0);
-//AudioConnection          patchCord2(adc, 0, usb2, 0);
-AudioConnection          patchCord3(adc, 1, biquad1, 0);
+AudioConnection          patchCord1(usb1, 0, i2s1, 0);
+//AudioConnection          patchCord2(usb1, 0, usb2, 0);
+AudioConnection          patchCord3(usb1, 1, biquad1, 0);
 //AudioConnection          patchCord4(biquad1, 0, usb2, 1);
 AudioConnection          patchCord5(biquad1, 0, i2s1, 1);
-AudioConnection          patchCord6(adc, 0, notefreq ,0);
-AudioConnection          patchCord7(adc, fft);
+AudioConnection          patchCord6(usb1, 0, notefreq ,0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=219,29
 // GUItool: end automatically generated code
 
@@ -36,14 +33,8 @@ void setup() {
   delay(250);
   AudioMemory(30);
   delay(250);
-  pinMode(0,INPUT);
-  pinMode(1,INPUT);
-  pinMode(2,INPUT);
-  pinMode(3,INPUT);
-  pinMode(4,INPUT);
-  pinMode(5,INPUT);
-  pinMode(6,INPUT);
-  pinMode(7,INPUT);
+  pinMode(A12,INPUT);
+  pinMode(A13,INPUT);
 
   notefreq.begin(1);
   sgtl5000_1.enable();
@@ -62,7 +53,8 @@ const int GATE_PIN = A16;
 const int AUDIO_PIN = A14;
 const int ENVELOPE_PIN = A15;
 
-int set_freq = 220; // used to be 880
+int set_freq = 440; // used to be 880
+int octave = 0;
 
 void loop() {
   int digit = 0;
@@ -116,14 +108,49 @@ void loop() {
       else if (digitalRead(6)) set_freq = 247;
       else if (digitalRead(7)) set_freq = 440;
    */
-  if (digitalRead(0)) set_freq = 131;
-  else if (digitalRead(1)) set_freq = 165;
-  else if (digitalRead(2)) set_freq = 175;
-  else if (digitalRead(3)) set_freq = 196;
-  else if (digitalRead(4)) set_freq = 220;
-  else if (digitalRead(5)) set_freq = 247;
-  else if (digitalRead(6)) set_freq = 440;
-  else if (digitalRead(7)) set_freq = 800;//doesn't work right now
+  if (analogRead(A13) > 3000) {
+    int buttonRead = analogRead(A13);
+    //Calibration button
+    if (buttonRead<24000 && buttonRead>21000) {
+      analogWrite(A21,127);
+      set_freq = 440;
+      return;
+    }
+    else if (buttonRead<27000 && buttonRead>25000) set_freq = 262;
+    else if (buttonRead<32000 && buttonRead>29000) set_freq = 278;
+    else if (buttonRead<38000 && buttonRead>35000) set_freq = 294;
+    else if (buttonRead<47000 && buttonRead>45000) set_freq = 312;
+    else if (buttonRead<62000 && buttonRead>59000) set_freq = 330;
+    else if (buttonRead<66000 && buttonRead>65000) set_freq = 350;
+
+    Serial.printf("{\"note\": \"%d\" }", set_freq); 
+    Serial.println();
+    
+  } else if (analogRead(A12) > 3000){
+    int buttonRead = analogRead(A12);
+    if (buttonRead<66000 && buttonRead>65000) set_freq = 370;
+    else if (buttonRead<62000 && buttonRead>59000) set_freq = 392;
+    else if (buttonRead<47000 && buttonRead>44000) set_freq = 416;
+    else if (buttonRead<38000 && buttonRead>35000) set_freq = 440;
+    else if (buttonRead<33000 && buttonRead>29000) set_freq = 466;
+    else if (buttonRead<28000 && buttonRead>25000) set_freq = 494;
+    else if (buttonRead<24000 && buttonRead>22000) {
+      if (octave > -2) {
+        octave -=1;
+        delay(200);
+      }
+    }
+    else if (buttonRead<22000 && buttonRead>20000) {
+      if (octave < 2) {
+        octave +=1;
+        delay(200);
+      }
+    }
+    Serial.printf("{\"note\": \"%d\" }", set_freq); 
+    Serial.println();
+  }
+  int new_set_freq = set_freq*pow(2.0,octave);
+  
   /*
   if (fft.available()){
     Serial.println("yes");
@@ -131,23 +158,24 @@ void loop() {
       Serial.println(6*fft.read(i));
     }
   }*/
+ 
   if (notefreq.available()) {
     int freq = notefreq.read();
     float prob = notefreq.probability();
-   
+
     tuned_note n = freq_to_note(freq, pitch_freqs);
-    //tuned_note n = freq_to_note(set_freq, pitch_freqs);
+    //tuned_note n = freq_to_note(new_set_freq, pitch_freqs);
     int index = n.getPitch();
     double distance = n.getDistance();      
     note_name note = *pitch_names[index];
-    note_name note_desired = *pitch_names[freq_to_note(set_freq, pitch_freqs).getPitch()];
+    note_name note_desired = *pitch_names[freq_to_note(new_set_freq, pitch_freqs).getPitch()];
     
-    compare_with_desired_pitch(set_freq, freq);
-    //Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), set_freq, freq, note.getName(), note.getModifier() , note.getOctave()); 
-    Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), set_freq, freq, note_desired.getName(), note_desired.getModifier() , note_desired.getOctave()); 
+    compare_with_desired_pitch(new_set_freq, freq);
+    //Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), new_set_freq, freq, note.getName(), note.getModifier() , note.getOctave()); 
+    Serial.printf("{\"timestamp\": \"%d\", \"desired\": \"%d\", \"actual\": \"%d\", \"note\": \"%c%c\", \"octave\": \"%i\" }", millis(), new_set_freq, freq, note_desired.getName(), note_desired.getModifier() , note_desired.getOctave()); 
     Serial.println();
     
-    //serialize_as_JSON(set_freq, freq, note.getName(), note.getModifier(), note.getOctave());
+    //serialize_as_JSON(new_set_freq, freq, note.getName(), note.getModifier(), note.getOctave());
     //Serial.println(note.getName());
   }
 }

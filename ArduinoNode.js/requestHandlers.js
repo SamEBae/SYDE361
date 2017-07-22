@@ -4,10 +4,13 @@
 
 var fs = require('fs'),
 server = require('./server');
+var pageHTML = "/pages/line.html";
+
 function sendInterface(response) {
   console.log("Request handler 'interface' was called.");
   response.writeHead(200, {"Content-Type": "text/html"});
-  var html = fs.readFileSync(__dirname + "/pages/visualfeedback.html");
+
+  var html = fs.readFileSync(__dirname + pageHTML);
   //var html = fs.readFileSync(__dirname + "/test.html");
   response.end(html);
 }

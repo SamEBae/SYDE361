@@ -34,75 +34,97 @@ int read_LCD_buttons()
  return btnNONE;  // when all others fail, return this...
 }
 int mode = 0;
+int octave = 4;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  lcd.begin(16, 2);              // start the library
-  lcd.setCursor(8,0);
-  lcd.print("|"); // print a simple message
+  lcd.begin(16, 2);              // start the library 
   lcd.setCursor(0,0);
-  lcd.print("CONT"); // print a simple message
+  lcd.print("A n");
+  lcd.setCursor(1,0);
+  lcd.print(octave);
+  lcd.setCursor(8,0);
+  lcd.print("|");
 }
 int perfect = 119; //from observation, might need calibration
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  if (read_LCD_buttons() == 1) {
+  lcd.setCursor(1,0);
+  //octave
+  
+  if (analogRead(3)>10) {
+    int buttonRead = analogRead(3);
+    //Calibrating
     lcd.setCursor(0,0);
-    lcd.print("CONT"); // print a simple message
-    mode = 0;
+    if (buttonRead<86 && buttonRead>74) {
+      lcd.setCursor(0,0);
+      lcd.print("CALIBRATING");
+      lcd.setCursor(0,1);
+      lcd.print("Hold for 1s     ");
+      delay(950);
+      if (analogRead(3)>86 || analogRead(3)<  4) {
+        lcd.setCursor(0,1);
+        lcd.print("Please retry");
+      }
+      else {
+        perfect = analogRead(1);
+        lcd.setCursor(0,1);
+        lcd.print("Thanks, let go  ");
+      }
+      delay(2000);
+      lcd.setCursor(0,0);
+      lcd.print("A n    |        ");
+      lcd.setCursor(0,1);
+      lcd.print("                ");
+      //Serial.print("perfect: ");
+      //Serial.println(perfect);
+    }
+    else if (buttonRead<97 && buttonRead>89) lcd.print("C n");
+    else if (buttonRead<114 && buttonRead>100) lcd.print("C #");
+    else if (buttonRead<138 && buttonRead>128) lcd.print("D n");
+    else if (buttonRead<172 && buttonRead>162) lcd.print("D #");
+    else if (buttonRead<231 && buttonRead>215) lcd.print("E n");
+    else if (buttonRead<348 && buttonRead>330) lcd.print("F n");
   }
-  else if (read_LCD_buttons() == 2) {
+  else if (analogRead(5)>10) {
+    int buttonRead = analogRead(5);//Calibrating
     lcd.setCursor(0,0);
-    lcd.print("DISC"); // print a simple message
-    mode = 1;
+    if (buttonRead<348 && buttonRead>310) lcd.print("F #");
+    else if (buttonRead<231 && buttonRead>200) lcd.print("G n");
+    else if (buttonRead<172 && buttonRead>164) lcd.print("G #");
+    else if (buttonRead<138 && buttonRead>130) lcd.print("A n");
+    else if (buttonRead<114 && buttonRead>108) lcd.print("A #");
+    else if (buttonRead<97 && buttonRead>92) lcd.print("B n");
+    else if (buttonRead<86 && buttonRead>76) {
+      if (octave > 2) {
+        octave -=1;
+        delay(200);
+      }
+    }
+    else if (buttonRead<77 && buttonRead>70) {
+      if (octave < 6) {
+        octave +=1;
+        delay(200);
+      }
+    }
   }
+  lcd.setCursor(1,0);
+  lcd.print(octave);
+  
   if (analogRead(2) > 200) {
-    Serial.println(analogRead(1));
-    int input = analogRead(1)+(128-perfect);
+    //Serial.println(analogRead(1));
+    //Serial.println("bbbb");
+    int input = analogRead(1)+(128-perfect)+4;
     if (input > 255) input = 255;
     if (input < 0) input = 0;
     int value = (input)/16;
-    if (mode == 0) {
-      lcd.setCursor(value,1);
-      lcd.print("|");
-      for (int i = 0 ; i < 16 ; i += 1) {
-        if (i != value){
-          lcd.setCursor(i,1);
-          lcd.print(" ");
-        }
-      }
-    }
-    if (mode == 1) {
-      if (value > 8) {
-        lcd.setCursor(13,1);
-        lcd.print("<--");
-        for (int i = 0 ; i < 13 ; i += 1) {
-          if (i != value){
-            lcd.setCursor(i,1);
-            lcd.print(" ");
-          }
-        }
-      }
-      else if (value < 8) {
-        lcd.setCursor(0,1);
-        lcd.print("-->");
-        for (int i = 3 ; i < 16 ; i += 1) {
-          if (i != value){
-            lcd.setCursor(i,1);
-            lcd.print(" ");
-          }
-        }
-      }
-      else {
-        lcd.setCursor(8,1);
-        lcd.print("X");
-        for (int i = 0 ; i < 16 ; i += 1) {
-          if (i != 8){
-            lcd.setCursor(i,1);
-            lcd.print(" ");
-          }
-        }
+    
+    lcd.setCursor(value,1);
+    lcd.print("|");
+    for (int i = 0 ; i < 16 ; i += 1) {
+      if (i != value){
+        lcd.setCursor(i,1);
+        lcd.print(" ");
       }
     }
   }
